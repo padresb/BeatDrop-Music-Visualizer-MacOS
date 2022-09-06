@@ -5266,7 +5266,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_LOAD_DEL)	// waiting to confirm file delete
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if (wParam == 'y' || wParam == 'Y')	// 'y' or 'Y'
 			{
 				// first add pathname to filename
 				wchar_t szDelFile[512];
@@ -5282,7 +5282,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_UPGRADE_PIXEL_SHADER)
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if (wParam == 'y' || wParam == 'Y')	// 'y' or 'Y'
 			{
                 if (m_pState->m_nMinPSVersion == m_pState->m_nMaxPSVersion)
                 {
@@ -5348,7 +5348,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
 		else if (m_UI_mode == UI_SAVE_OVERWRITE)	// waiting to confirm overwrite file on save
 		{
-			if (wParam == keyMappings[0] || wParam == keyMappings[1])	// 'y' or 'Y'
+			if (wParam == 'y' || wParam == 'Y')	// 'y' or 'Y'
 			{
 				// first add pathname + extension to filename
 				wchar_t szNewFile[512];
