@@ -213,7 +213,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DIR_COLOR     0xFF88CCFF
 #define TOOLTIP_COLOR 0xFFBBBBCC
 
-#define MAX_PRESETS_PER_PAGE 32
+#define MAX_PRESETS_PER_PAGE 128
 
 //#define PRESS_F1_MSG                 "Press F1 for Help " // leave extra space @ end, so italicized fonts don't get clipped
 // defined in the stringtable resources now since 2.0e
