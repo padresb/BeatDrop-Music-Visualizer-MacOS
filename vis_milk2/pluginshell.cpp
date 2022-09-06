@@ -2283,7 +2283,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 
 		switch (wParam)
 		{
-		    case VK_F12:
+		    case VK_F1:  //Changed the help screen shortcut from F12 to F1
 			    m_show_press_f1_msg = 0;
 			    ToggleHelp();
 			    return 0;
