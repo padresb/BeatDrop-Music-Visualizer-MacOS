@@ -5387,15 +5387,15 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
 		switch(wParam)
 		{
-		case VK_F9:
-            m_bShowSongTitle = !m_bShowSongTitle; // we processed (or absorbed) the key
-			m_bShowSongTime = !m_bShowSongTime;
-			m_bShowSongLen  = !m_bShowSongLen;
-		    m_bShowPresetInfo = !m_bShowPresetInfo;
+		//case VK_F9:
+            //m_bShowSongTitle = !m_bShowSongTitle; // we processed (or absorbed) the key
+			//m_bShowSongTime = !m_bShowSongTime;
+			//m_bShowSongLen  = !m_bShowSongLen;
+		   // m_bShowPresetInfo = !m_bShowPresetInfo; //I didn't need this.
             return 0; // we processed (or absorbed) the key
-		//case VK_F4:		m_bShowFPS = !m_bShowFPS;				return 0; // we processed (or absorbed) the key
-		//case VK_F6:		m_bShowRating = !m_bShowRating;			return 0; // we processed (or absorbed) the key
-		//case VK_F7:
+		case VK_F5:		m_bShowFPS = !m_bShowFPS;				return 0; // we processed (or absorbed) the key
+		case VK_F6:		m_bShowRating = !m_bShowRating;			return 0; // we processed (or absorbed) the key
+		case VK_F4:		m_bShowPresetInfo = !m_bShowPresetInfo;
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
@@ -5422,9 +5422,9 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		//	}
 		//	return 0; // we processed (or absorbed) the key
 
-  //      case VK_F9:
-  //          m_bShowShaderHelp = !m_bShowShaderHelp;
-  //          return FALSE;
+        case VK_F9:
+            m_bShowShaderHelp = !m_bShowShaderHelp;
+            return FALSE;   //Alr. Fixed the shader help.
 
         case VK_SCROLL:
             m_bPresetLockedByUser = GetKeyState(VK_SCROLL) & 1;
