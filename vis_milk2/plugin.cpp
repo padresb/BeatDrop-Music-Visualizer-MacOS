@@ -879,11 +879,11 @@ void CPlugin::OverrideDefaults()
     // m_start_fullscreen      = 0;       // 0 or 1
     // m_start_desktop         = 0;       // 0 or 1
     // m_fake_fullscreen_mode  = 0;       // 0 or 1
-    // m_max_fps_fs            = 30;      // 1-120, or 0 for 'unlimited'
-    // m_max_fps_dm            = 30;      // 1-120, or 0 for 'unlimited'
-    // m_max_fps_w             = 30;      // 1-120, or 0 for 'unlimited'
+    m_max_fps_fs            = 0;      // 1-120, or 0 for 'unlimited'
+    m_max_fps_dm            = 0;      // 1-120, or 0 for 'unlimited'
+    m_max_fps_w             = 0;      // 1-120, or 0 for 'unlimited'
     // m_show_press_f1_msg     = 1;       // 0 or 1
-       m_allow_page_tearing_w  = 0;       // 0 or 1
+    // m_allow_page_tearing_w  = 0;       // 0 or 1
     // m_allow_page_tearing_fs = 0;       // 0 or 1
     // m_allow_page_tearing_dm = 1;       // 0 or 1
     // m_minimize_winamp       = 1;       // 0 or 1
@@ -945,12 +945,12 @@ void CPlugin::MyPreInitialize()
 	//m_nWidth			= 1024;
 	//m_nHeight			= 768;
 	//m_nDispBits		= 16;
-    m_nCanvasStretch    = 0;
+    m_nCanvasStretch    = 100;   //Maybe it looks sharper, idk
 	m_nTexSizeX			= -1;	// -1 means "auto"
 	m_nTexSizeY			= -1;	// -1 means "auto"
 	m_nTexBitsPerCh     =  8;
-	m_nGridX			= 48;//32;
-	m_nGridY			= 36;//24;
+	m_nGridX			= 64;//32;
+	m_nGridY			= 64;//24;
 
 	m_bShowPressF1ForHelp = true;
 	//lstrcpy(m_szMonitorName, "[don't use multimon]");
@@ -959,7 +959,7 @@ void CPlugin::MyPreInitialize()
 	m_bAutoGamma    = true;
 	//m_nFpsLimit			= -1;
 	m_bEnableRating			= true;
-    //m_bInstaScan            = false;
+        m_bInstaScan            = true;  //I turned on to scan the presets in a faster way (I know?)
 	m_bSongTitleAnims		= true;
 	m_fSongTitleAnimDuration = 1.7f;
 	m_fTimeBetweenRandomSongTitles = -1.0f;
@@ -980,8 +980,8 @@ void CPlugin::MyPreInitialize()
     m_nMaxPSVersion_ConfigPanel = -1;  // -1 = auto, 0 = disable shaders, 2 = ps_2_0, 3 = ps_3_0
     m_nMaxPSVersion_DX9 = -1;          // 0 = no shader support, 2 = ps_2_0, 3 = ps_3_0
     m_nMaxPSVersion = -1;              // this one will be the ~min of the other two.  0/2/3.
-    m_nMaxImages = 32;
-    m_nMaxBytes  = 16000000;
+    m_nMaxImages = 2048;
+    m_nMaxBytes  = 2000000000;
 
     #ifdef _DEBUG
         m_dwShaderFlags = D3DXSHADER_DEBUG|(1<<16);
@@ -1194,14 +1194,14 @@ void CPlugin::MyReadConfig()
     m_bPresetLockOnAtStartup = GetPrivateProfileBoolW(L"settings",L"bPresetLockOnAtStartup",m_bPresetLockOnAtStartup,pIni);
 	m_bPreventScollLockHandling = GetPrivateProfileBoolW(L"settings",L"m_bPreventScollLockHandling",m_bPreventScollLockHandling,pIni);
 
-    m_nCanvasStretch = GetPrivateProfileIntW(L"settings",L"nCanvasStretch"    ,m_nCanvasStretch,pIni);
-	m_nTexSizeX		= GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni);
-	m_nTexSizeY		= m_nTexSizeX;
+    m_nCanvasStretch = 100;  //GetPrivateProfileIntW(L"settings",L"nCanvasStretch"    ,m_nCanvasStretch,pIni)
+	m_nTexSizeX		= -1;  //GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni)
+	m_nTexSizeY		= -1;  //m_nTexSizeX
 	m_bTexSizeWasAutoPow2   = (m_nTexSizeX == -2);
 	m_bTexSizeWasAutoExact = (m_nTexSizeX == -1);
 	m_nTexBitsPerCh = GetPrivateProfileIntW(L"settings", L"nTexBitsPerCh", m_nTexBitsPerCh, pIni);
-	m_nGridX		= GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni);
-	m_nGridY        = m_nGridX*3/4;
+	m_nGridX	= 64;  //GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni)
+	m_nGridY        = 64;  //m_nGridX*3/4
     m_nMaxPSVersion_ConfigPanel = GetPrivateProfileIntW(L"settings",L"MaxPSVersion",m_nMaxPSVersion_ConfigPanel,pIni);
     m_nMaxImages    = GetPrivateProfileIntW(L"settings",L"MaxImages",m_nMaxImages,pIni);
     m_nMaxBytes     = GetPrivateProfileIntW(L"settings",L"MaxBytes" ,m_nMaxBytes ,pIni);
