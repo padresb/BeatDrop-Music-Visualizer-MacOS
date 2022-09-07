@@ -26,11 +26,11 @@ Use BeatDrop with your favourite
   ...
 
 ## System Requirements
-* Windows 10, Windows 8.1 or Windows 7 SP1
+* Windows 11, Windows 10, Windows 8.1 or Windows 7 SP1
 
 * WASAPI-compatible sound card
 
-* DirectX 9 - compatible GPU
+* DirectX 9 or higher - compatible GPU
 
 * DirectX End-User [Runtimes](https://www.microsoft.com/en-us/download/details.aspx?id=8109) (also included in the installer) contains the required 32-bit helper libraries d3dx9_43.dll and d3dx9_31.dll
 
