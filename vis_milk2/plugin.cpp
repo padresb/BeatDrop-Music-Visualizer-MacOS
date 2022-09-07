@@ -1284,7 +1284,7 @@ void CPlugin::MyWriteConfig()
 	//WritePrivateProfileIntW(m_bAlways3D, 			"bAlways3D",			pIni, "settings");
     //WritePrivateProfileFloat(m_fStereoSep,          "fStereoSep",           pIni, "settings");
 	//WritePrivateProfileIntW(m_bFixSlowText,		    "bFixSlowText",			pIni, "settings");
-	//itePrivateProfileInt(m_bAlwaysOnTop,		    "bAlwaysOnTop",			pIni, "settings");
+	WritePrivateProfileInt(m_bAlwaysOnTop,		    "bAlwaysOnTop",			pIni, "settings");
 	//WritePrivateProfileIntW(m_bWarningsDisabled,	    "bWarningsDisabled",	pIni, "settings");
 	WritePrivateProfileIntW(m_bWarningsDisabled2,	L"bWarningsDisabled2",	pIni, L"settings");
 	//WritePrivateProfileIntW(m_bAnisotropicFiltering,	"bAnisotropicFiltering",pIni, "settings");
