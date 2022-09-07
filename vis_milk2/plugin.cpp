@@ -970,7 +970,7 @@ void CPlugin::MyPreInitialize()
 
     //m_bAlways3D		  	    = false;
     //m_fStereoSep            = 1.0f;
-    //m_bAlwaysOnTop		= false;
+    m_bAlwaysOnTop		= false;
     //m_bFixSlowText          = true;
     //m_bWarningsDisabled     = false;
     m_bWarningsDisabled2    = false;
@@ -5395,7 +5395,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             return 0; // we processed (or absorbed) the key
 		case VK_F5:		m_bShowFPS = !m_bShowFPS;				return 0; // we processed (or absorbed) the key
 		case VK_F6:		m_bShowRating = !m_bShowRating;			return 0; // we processed (or absorbed) the key
-		case VK_F4:		m_bShowPresetInfo = !m_bShowPresetInfo;
+		case VK_F4:		m_bShowPresetInfo = !m_bShowPresetInfo;         return 0; // we processed (or absorbed) the key
+		case VK_F7;		m_bAlwaysOnTop = !m_bAlwaysOnTop;		return 0; // we processed (or absorbed) the key
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
