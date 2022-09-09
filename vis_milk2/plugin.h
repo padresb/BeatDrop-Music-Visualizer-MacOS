@@ -38,6 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "state.h"
 #include <vector>
 #include "../ns-eel2/ns-eel.h"
+#include <string>
 
 //#include <core/sdk/IPlaybackService.h>
 
