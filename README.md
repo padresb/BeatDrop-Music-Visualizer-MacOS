@@ -1,3 +1,19 @@
+# The improved visualizer is here!
+In this repo will fix the bug, adding new features and more stuff on BeatDrop Music Visualizer.
+
+Things fixed:
+* The y/n decision bug
+* Keyboard function changes (F4: Show Preset Info, F5: Show FPS, F6: Show Rating, F1: Help)
+* Help text changes
+* Unlimited FPS, nTexSize to Auto, nCanvasStretch to 100 and more...
+
+Features to be added:
+* Always On Top Feature (Milkdrop2077 just helped me to implement this feature, this can be done now)
+* Toggle 3D Support
+* AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
 # BeatDrop Music Visualizer
 
 BeatDrop is a stand-alone implementation of the amazing Milkdrop2 Winamp plug-in.
