@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "WinResrc.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -85,14 +85,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Maxim Volskiy"
-            VALUE "FileDescription", "BeatDrop Music Visualizer"
-            VALUE "FileVersion", "1, 0, 0, 0"
+            VALUE "CompanyName", "Maxim Volskiy & Incubo_"
+            VALUE "FileDescription", "BeatDrop Music Visualizer - The Milkdrop2 Music Visualizer Standalone"
+            VALUE "FileVersion", "1, 1. 0. 0"
             VALUE "InternalName", "BeatDrop"
-            VALUE "LegalCopyright", "Copyright © BeatDrop development team"
+            VALUE "LegalCopyright", "Copyright Â© BeatDrop development team"
             VALUE "OriginalFilename", "BeatDrop.exe"
             VALUE "ProductName", "BeatDrop"
-            VALUE "ProductVersion", "1, 0, 0, 0"
+            VALUE "ProductVersion", "1, 1, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
