@@ -1,5 +1,5 @@
 # The improved visualizer is here!
-In this repo will fix the bug, adding new features and more stuff on BeatDrop Music Visualizer.
+In this repo will fix the bug, adding new features and more stuff to BeatDrop Music Visualizer.
 
 Things fixed:
 * The y/n decision bug
