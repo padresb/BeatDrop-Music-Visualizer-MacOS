@@ -11,6 +11,8 @@ Features to be added:
 * Always On Top Feature (Milkdrop2077 just helped me to implement this feature, this can be done now)
 * Toggle 3D Support
 * AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
+* Getting BeatDrop's Song Title data from Windows Playback
+* Spout Support
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
