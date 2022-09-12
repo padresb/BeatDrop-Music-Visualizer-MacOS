@@ -14,6 +14,9 @@ Features to be added:
 * Getting BeatDrop's Song Title data from Windows Playback
 * Spout Support ([Look DrO's Spout Addition for WACUP](https://github.com/WACUP/vis_milk2/commit/8bc232a670442c79713a15881504bf2813ef8554), [leadedge's Spout Version of BeatDrop](https://github.com/leadedge/BeatDrop))
 
+Things that will be fixed:
+* Doing a preset mashup will cause an error message on Windows 11.
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 # BeatDrop Music Visualizer
