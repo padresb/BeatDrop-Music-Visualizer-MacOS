@@ -12,7 +12,7 @@ Features to be added:
 * Toggle 3D Support
 * AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
 * Getting BeatDrop's Song Title data from Windows Playback
-* Spout Support
+* Spout Support ([Look DrO's Spout Addition for WACUP](https://github.com/WACUP/vis_milk2/commit/8bc232a670442c79713a15881504bf2813ef8554), [leadedge's Spout Version of BeatDrop](https://github.com/leadedge/BeatDrop))
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
