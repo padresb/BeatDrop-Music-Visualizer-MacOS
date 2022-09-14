@@ -20,8 +20,8 @@ Things that will be fixed:
 # BEFORE YOU RUN BEATDROP
 
 Please download and install DirectX Software Development Kit and DirectX End-User Runtime Web First.
-DirectX SDK: https://www.microsoft.com/en-us/download/confirmation.aspx?id=6812
-DirectX Runtime Web: https://www.microsoft.com/en-us/download/details.aspx?id=35
+* DirectX SDK: https://www.microsoft.com/en-us/download/confirmation.aspx?id=6812
+* DirectX Runtime Web: https://www.microsoft.com/en-us/download/details.aspx?id=35
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
