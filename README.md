@@ -17,6 +17,12 @@ Features to be added:
 Things that will be fixed:
 * Doing a preset mashup will cause an error message on Windows 11.
 
+# BEFORE YOU RUN BEATDROP
+
+Please download and install DirectX Software Development Kit and DirectX End-User Runtime Web First.
+DirectX SDK: https://www.microsoft.com/en-us/download/confirmation.aspx?id=6812
+DirectX Runtime Web: https://www.microsoft.com/en-us/download/details.aspx?id=35
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 # BeatDrop Music Visualizer
