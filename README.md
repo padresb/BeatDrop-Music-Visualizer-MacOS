@@ -19,7 +19,7 @@ Things that will be fixed:
 
 # BEFORE YOU RUN BEATDROP
 
-Please download and install [DirectX Software Development Kit](https://www.microsoft.com/en-us/download/details.aspx?id=6812) and [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) first.
+Please download and install [DirectX Software Development Kit](https://www.microsoft.com/en-us/download/details.aspx?id=6812), [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) and Microsoft Visual C++ Redistributable: https://aka.ms/vs/17/release/vc_redist.x64.exe from https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170 first.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
