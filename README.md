@@ -7,8 +7,11 @@ Things fixed:
 * Help text changes
 * Unlimited FPS, nTexSize to Auto, nCanvasStretch to 100 and more...
 
+Features added:
+* Always On Top Feature (F7 Hotkey)
+* Multiple monitor stretch (Thanks to @milkdropper for the code - ALT + SHIFT Hotkey) 
+
 Features to be added:
-* Always On Top Feature (Milkdrop2077 just helped me to implement this feature, this can be done now)
 * Toggle 3D Support
 * AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
 * Getting BeatDrop's Song Title data from Windows Playback
