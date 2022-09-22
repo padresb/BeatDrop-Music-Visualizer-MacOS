@@ -507,6 +507,8 @@ Order of Function Calls
 
 #define FRAND ((rand() % 7381)/7380.0f)
 
+static bool m_bAlwaysOnTop = false;
+
 void NSEEL_HOSTSTUB_EnterMutex(){}
 void NSEEL_HOSTSTUB_LeaveMutex(){}
 
@@ -5116,6 +5118,23 @@ void CPlugin::MyRenderUI(
 		}
     }
 }
+//Always On Top
+void ToggleAlwaysOnTop(HWND hwnd) {
+
+	RECT rect;
+	GetWindowRect(hwnd, &rect);
+	int x = rect.left;
+	int y = rect.top;
+	int width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
+
+	if (m_bAlwaysOnTop) {
+		SetWindowPos(hwnd, HWND_TOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+	}
+	else {
+		SetWindowPos(hwnd, HWND_NOTOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+	}
+}
 
 //----------------------------------------------------------------------
 
@@ -5396,6 +5415,17 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		case VK_F5:		m_bShowFPS = !m_bShowFPS;				return 0; // we processed (or absorbed) the key
 		case VK_F6:		m_bShowRating = !m_bShowRating;			return 0; // we processed (or absorbed) the key
 		case VK_F4:		m_bShowPresetInfo = !m_bShowPresetInfo;         return 0; // we processed (or absorbed) the key
+		case VK_F7: 
+			m_bAlwaysOnTop = !m_bAlwaysOnTop;
+			if (m_bAlwaysOnTop) {
+				ToggleAlwaysOnTop(hWnd);
+				wsprintfW(m_szSongTitle, L"Always On Top ON"); LaunchSongTitleAnim();
+			}
+			else { 
+				ToggleAlwaysOnTop(hWnd);
+				wsprintfW(m_szSongTitle, L"Always On Top OFF"); LaunchSongTitleAnim();
+			}
+			 return 0;
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
