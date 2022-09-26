@@ -18,7 +18,7 @@ Features to be added:
 * Spout Support ([Look DrO's Spout Addition for WACUP](https://github.com/WACUP/vis_milk2/commit/8bc232a670442c79713a15881504bf2813ef8554), [leadedge's Spout Version of BeatDrop](https://github.com/leadedge/BeatDrop))
 
 Things that will be fixed:
-* Doing a preset mashup will cause an error message on Windows 11. [SOLVED: Anyone who uses Visual Studio, before you compile the exe file, you must change from debug to release].
+* Doing a preset mashup will cause an error message on Windows 11. [SOLVED: Anyone who uses Visual Studio, before you compile the exe file, you must change from debug to release (or build the .exe file without debug infos)].
 
 # BEFORE YOU RUN BEATDROP
 
