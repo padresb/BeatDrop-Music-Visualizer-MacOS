@@ -155,6 +155,11 @@ void ToggleStretch(HWND hwnd) {
 void ToggleFullScreen(HWND hwnd) {
     if (!fullscreen) {
         ShowCursor(FALSE);
+        
+        lastWindowStyle = GetWindowLong(hwnd, GWL_STYLE);
+        lastWindowStyleEx = GetWindowLongW(hwnd, GWL_EXSTYLE);
+        lastWindowStyleEx &= ~WS_EX_TOPMOST;
+        GetWindowRect(hwnd, &lastRect);
 
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
 
