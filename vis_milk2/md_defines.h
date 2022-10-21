@@ -53,8 +53,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LINEFEED_CONTROL_CHAR 1		// note: this char should be outside the ascii range from SPACE (32) to lowercase 'z' (122)
 #define MAX_CUSTOM_MESSAGE_FONTS 16		// 0-15
 #define MAX_CUSTOM_MESSAGES 100			// 00-99
-#define MAX_CUSTOM_WAVES  4
-#define MAX_CUSTOM_SHAPES 4
+#define MAX_CUSTOM_WAVES  16
+#define MAX_CUSTOM_SHAPES 16
 
 // aspect ratio makes the motion in the UV field [0..1] cover the screen appropriately,
 //#define ASPECT_X    1.00
