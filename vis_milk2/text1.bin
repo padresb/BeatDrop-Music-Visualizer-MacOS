@@ -1,7 +1,8 @@
  GENERAL:
 
    ESC             exit help / menus
-   ALT+ENTER       toggle fullscreen
+   ALT + ENTER       toggle fullscreen
+   ALT + SHIFT       toggle multiple monitor stretch
 
  PRESETS:
 
@@ -27,4 +28,3 @@
    F7   always on top
    F10   freeze/unfreeze screen (only on windowed)
    N   show per-frame monitor
-   ALT + SHIFT   toggle multiple monitor stretch
