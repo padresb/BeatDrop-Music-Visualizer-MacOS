@@ -11,6 +11,7 @@ Features added:
 * Always On Top Feature (F7 Hotkey)
 * Multiple monitor stretch (Thanks to @milkdropper for the code - ALT + SHIFT Hotkey) 
 * Now it can support up to 16 custom shapes and waves!
+* Real-time toggling FPS by pressing F3!
 
 Features to be added:
 * Toggle 3D Support
