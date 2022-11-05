@@ -508,6 +508,7 @@ Order of Function Calls
 #define FRAND ((rand() % 7381)/7380.0f)
 
 static bool m_bAlwaysOnTop = false;
+int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
 
 void NSEEL_HOSTSTUB_EnterMutex(){}
 void NSEEL_HOSTSTUB_LeaveMutex(){}
@@ -5411,6 +5412,67 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			//m_bShowSongTime = !m_bShowSongTime;
 			//m_bShowSongLen  = !m_bShowSongLen;
 		   // m_bShowPresetInfo = !m_bShowPresetInfo; //I didn't need this.
+            return 0; // we processed (or absorbed) the key
+		case VK_F3: {
+            ToggleFPSNumPressed++;
+            if (ToggleFPSNumPressed == 1)
+            {
+                m_max_fps_fs = 60;
+                m_max_fps_dm = 60;
+                m_max_fps_w = 60;
+                wsprintfW(m_szSongTitle, L"60 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 2)
+            {
+                m_max_fps_fs = 90;
+                m_max_fps_dm = 90;
+                m_max_fps_w = 90;
+                wsprintfW(m_szSongTitle, L"90 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 3)
+            {
+                m_max_fps_fs = 120;
+                m_max_fps_dm = 120;
+                m_max_fps_w = 120;
+                wsprintfW(m_szSongTitle, L"120 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 4)
+            {
+                m_max_fps_fs = 144;
+                m_max_fps_dm = 144;
+                m_max_fps_w = 144;
+                wsprintfW(m_szSongTitle, L"144 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 5)
+            {
+                m_max_fps_fs = 240;
+                m_max_fps_dm = 240;
+                m_max_fps_w = 240;
+                wsprintfW(m_szSongTitle, L"240 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 6)
+            {
+                m_max_fps_fs = 360;
+                m_max_fps_dm = 360;
+                m_max_fps_w = 360;
+                wsprintfW(m_szSongTitle, L"360 fps"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 7)
+            {
+                m_max_fps_fs = 0;
+                m_max_fps_dm = 0;
+                m_max_fps_w = 0;
+                wsprintfW(m_szSongTitle, L"Unlimited fps!"); LaunchSongTitleAnim();
+            }
+            else if (ToggleFPSNumPressed == 8)
+            {
+                ToggleFPSNumPressed = 0;
+                m_max_fps_fs = 30;
+                m_max_fps_dm = 30;
+                m_max_fps_w = 30;
+                wsprintfW(m_szSongTitle, L"30 fps"); LaunchSongTitleAnim();
+            }
+        }
             return 0; // we processed (or absorbed) the key
 		case VK_F5:		m_bShowFPS = !m_bShowFPS;				return 0; // we processed (or absorbed) the key
 		case VK_F6:		m_bShowRating = !m_bShowRating;			return 0; // we processed (or absorbed) the key
