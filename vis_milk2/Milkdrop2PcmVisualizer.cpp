@@ -265,7 +265,11 @@ LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
             }
             break;
         }
-
+        case WM_LBUTTONDBLCLK:
+           {
+              ToggleFullScreen(hWnd);
+           }
+            
         default:
             return g_plugin.PluginShellWindowProc(hWnd, uMsg, wParam, lParam);
     }
@@ -304,6 +308,7 @@ unsigned __stdcall CreateWindowAndRun(void* data) {
     wndClass.hInstance = instance;
     wndClass.hIcon = NULL;
     wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wndClass.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS; // CS_DBLCLKS lets the window receive WM_LBUTTONDBLCLK, for toggling fullscreen mode...
     wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wndClass.lpszMenuName = NULL;
     wndClass.lpszClassName = L"Direct3DWindowClass";
