@@ -326,14 +326,22 @@ unsigned __stdcall CreateWindowAndRun(void* data) {
     RECT rc;
     SetRect(&rc, 0, 0, windowWidth, windowHeight);
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, false);
+    
+    // Centre on the desktop work area
+    int WindowPosLeft = 0;
+    int WindowPosTop = 0;
+    RECT WorkArea;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, (LPVOID)&WorkArea, 0);
+    WindowPosLeft += ((WorkArea.right - WorkArea.left) - windowWidth) / 2;
+    WindowPosTop += ((WorkArea.bottom - WorkArea.top) - windowHeight) / 2;
 
     // Create the render window
     HWND hwnd = CreateWindowW(
         L"Direct3DWindowClass",
         L"BeatDrop Music Visualizer",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
+        WindowPosLeft,
+        WindowPosTop,
         (rc.right - rc.left),
         (rc.bottom - rc.top),
         0,
