@@ -1,4 +1,8 @@
-# The improved visualizer is here!
+![Logo](https://github.com/OfficialIncubo/The-Improved-and-Modified-Version-of-BeatDrop-Music-Visualizer/raw/master/Logos/BeatDrop%20New%20Logo%20GitGub%20ver.png) (logo design by Incubo_)
+
+# BeatDrop Music Visualizer
+
+The improved visualizer is here!
 In this repo will fix the bug, adding new features and more stuff to BeatDrop Music Visualizer.
 
 Things fixed:
@@ -27,8 +31,6 @@ Things that will be fixed:
 Please download and install [DirectX Software Development Kit](https://www.microsoft.com/en-us/download/details.aspx?id=6812), [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) and All the Microsoft Visual C++ Redistributable Versions: https://aka.ms/vs/17/release/vc_redist.x64.exe from https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170 first.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
-
-# BeatDrop Music Visualizer
 
 BeatDrop is a stand-alone implementation of the amazing Milkdrop2 Winamp plug-in.
 
