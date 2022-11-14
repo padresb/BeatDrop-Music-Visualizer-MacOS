@@ -1,3 +1,5 @@
+![Discord Shield](https://discord.com/api/guilds/1041603212798599168/widget.png?style=shield) [Chat with us on Discord!](https://discord.gg/rp5cBDtGuM)
+
 ![Logo](https://github.com/OfficialIncubo/The-Improved-and-Modified-Version-of-BeatDrop-Music-Visualizer/raw/master/Logos/BeatDrop%20New%20Logo%20GitGub%20ver.png) (logo design by Incubo_)
 
 # BeatDrop Music Visualizer
