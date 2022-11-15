@@ -6393,17 +6393,18 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		return 0; // we processed (or absorbed) the key
 
 
-	case 'u':
-	case 'U':
-        AddError(wasabiApiLangString(IDS_SHUFFLE_IS_NOW_ON), 3.0f, ERR_NOTIFY, false);
-		return 0; // we processed (or absorbed) the key
+	//NOT NEEDED
+	//case 'u':
+	//case 'U':
+        //AddError(wasabiApiLangString(IDS_SHUFFLE_IS_NOW_ON), 3.0f, ERR_NOTIFY, false);
+		//return 0; // we processed (or absorbed) the key
 
-	/*
+	
 	case 'u':	m_pState->m_fWarpScale /= 1.1f;			break;
 	case 'U':	m_pState->m_fWarpScale *= 1.1f;			break;
-	case 'i':	m_pState->m_fWarpAnimSpeed /= 1.1f;		break;
-	case 'I':	m_pState->m_fWarpAnimSpeed *= 1.1f;		break;
-	*/
+	case 'b':	m_pState->m_fWarpAnimSpeed /= 1.1f;		break;
+	case 'B':	m_pState->m_fWarpAnimSpeed *= 1.1f;		break;
+	
 	case 't':
 	case 'T':
 		LaunchSongTitleAnim();
@@ -6473,16 +6474,16 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
         break;
 
 	// row 2 keys
-    // 'A' KEY IS FREE!!
     // 'D' KEY IS FREE!!
-	/*case 'a':
+	case 'p':
 		m_pState->m_fVideoEchoAlpha -= 0.1f;
 		if (m_pState->m_fVideoEchoAlpha.eval(-1) < 0) m_pState->m_fVideoEchoAlpha = 0;
 		return 0; // we processed (or absorbed) the key
-	case 'A':
+	case P':
 		m_pState->m_fVideoEchoAlpha += 0.1f;
 		if (m_pState->m_fVideoEchoAlpha.eval(-1) > 1.0f) m_pState->m_fVideoEchoAlpha = 1.0f;
 		return 0; // we processed (or absorbed) the key
+	/*		
 	case 'd':
 		m_pState->m_fDecay += 0.01f;
 		if (m_pState->m_fDecay.eval(-1) > 1.0f) m_pState->m_fDecay = 1.0f;
@@ -6572,6 +6573,8 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 's':				// SAVE PRESET
 	case 'S':
+		m_show_help = false;
+		
 		if (m_UI_mode == UI_REGULAR)
 		{
 			//m_bPresetLockedByCode = true;
@@ -6598,6 +6601,8 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 'l':				// LOAD PRESET
 	case 'L':
+		m_show_help = false;
+		
 		if (m_UI_mode == UI_LOAD)
 		{
 			m_UI_mode = UI_REGULAR;
@@ -6619,6 +6624,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 'm':
 	case 'M':
+		m_show_help = false;
 
 		if (m_UI_mode == UI_MENU)
 			m_UI_mode = UI_REGULAR;
