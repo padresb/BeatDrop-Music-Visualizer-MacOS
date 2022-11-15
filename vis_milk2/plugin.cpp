@@ -5405,6 +5405,16 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         //   "virtual-key codes [win32]" in the msdn help.
         nRepeat = LOWORD(lParam);
 
+		if (wParam == VK_F1) {
+			// Change to regular
+			m_UI_mode = UI_REGULAR;
+			m_waitstring.bActive = false; // For F8
+			// Toggle help display
+			m_show_press_f1_msg = 0;
+			ToggleHelp();
+			return 0;
+		}
+		    
 		switch(wParam)
 		{
 		//case VK_F9:
