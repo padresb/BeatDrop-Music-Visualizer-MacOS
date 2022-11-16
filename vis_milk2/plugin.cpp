@@ -6489,7 +6489,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		m_pState->m_fVideoEchoAlpha -= 0.1f;
 		if (m_pState->m_fVideoEchoAlpha.eval(-1) < 0) m_pState->m_fVideoEchoAlpha = 0;
 		return 0; // we processed (or absorbed) the key
-	case P':
+	case 'P':
 		m_pState->m_fVideoEchoAlpha += 0.1f;
 		if (m_pState->m_fVideoEchoAlpha.eval(-1) > 1.0f) m_pState->m_fVideoEchoAlpha = 1.0f;
 		return 0; // we processed (or absorbed) the key
