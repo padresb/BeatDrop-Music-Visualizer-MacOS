@@ -3159,6 +3159,511 @@ void CPlugin::DrawWave(float *fL, float *fR)
 			}
 
 			break;
+						case 9:
+		// large wave
+		nVerts /= 2;
+
+		if (nVerts > m_nTexSizeX / 3)
+			nVerts = m_nTexSizeX / 3;
+
+		if (wave == 8)
+			nVerts = 256;
+		else
+			sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts);	// only call this once nVerts is final!
+
+		if (m_pState->m_bModWaveAlphaByVolume)
+			alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+		if (alpha < 0) alpha = 0;
+		if (alpha > 1) alpha = 1;
+		//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+		{
+			float ang = 1.57f * fWaveParam2;	// from -PI/2 to PI/2
+			float dx = cosf(ang);
+			float dy = sinf(ang);
+
+			float edge_x[2], edge_y[2];
+
+			//edge_x[0] = fWavePosX - dx*3.0f;
+			//edge_y[0] = fWavePosY - dy*3.0f;
+			//edge_x[1] = fWavePosX + dx*3.0f;
+			//edge_y[1] = fWavePosY + dy*3.0f;
+			edge_x[0] = fWavePosX * cosf(ang + 1.57f) - dx * 3.0f;
+			edge_y[0] = fWavePosX * sinf(ang + 1.57f) - dy * 3.0f;
+			edge_x[1] = fWavePosX * cosf(ang + 1.57f) + dx * 3.0f;
+			edge_y[1] = fWavePosX * sinf(ang + 1.57f) + dy * 3.0f;
+
+			for (i = 0; i < 2; i++)	// for each point defining the line
+			{
+				// clip the point against 4 edges of screen
+				// be a bit lenient (use +/-1.1 instead of +/-1.0)
+				//	 so the dual-wave doesn't end too soon, after the channels are moved apart
+				for (int j = 0; j < 4; j++)
+				{
+					float t;
+					bool bClip = false;
+
+					switch (j)
+					{
+					case 0:
+						if (edge_x[i] > 1.1f)
+						{
+							t = (1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+							bClip = true;
+						}
+						break;
+					case 1:
+						if (edge_x[i] < -1.1f)
+						{
+							t = (-1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+							bClip = true;
+						}
+						break;
+					case 2:
+						if (edge_y[i] > 1.1f)
+						{
+							t = (1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+							bClip = true;
+						}
+						break;
+					case 3:
+						if (edge_y[i] < -1.1f)
+						{
+							t = (-1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+							bClip = true;
+						}
+						break;
+					}
+
+					if (bClip)
+					{
+						float dx = edge_x[i] - edge_x[1 - i];
+						float dy = edge_y[i] - edge_y[1 - i];
+						edge_x[i] = edge_x[1 - i] + dx * t;
+						edge_y[i] = edge_y[1 - i] + dy * t;
+					}
+				}
+			}
+
+			dx = (edge_x[1] - edge_x[0]) / (float)nVerts;
+			dy = (edge_y[1] - edge_y[0]) / (float)nVerts;
+			float ang2 = atan2f(dy, dx);
+			float perp_dx = cosf(ang2 + 1.57f);
+			float perp_dy = sinf(ang2 + 1.57f);
+
+			
+				for (i = 0; i < nVerts; i++)
+				{
+					v[i].x = edge_x[0] + dx * i + perp_dx * 1.00f * fL[i + sample_offset];
+					v[i].y = edge_y[0] + dy * i + perp_dy * 1.00f * fL[i + sample_offset];
+					//v[i].Diffuse = color;
+				}
+			
+
+
+				nBreak = nVerts;
+				nVerts *= 2;
+			}
+		
+
+		break;
+
+
+
+		case 10:
+		// x wave (It should be called X marks the spot, isn't it?)
+			nVerts /= 2;
+
+			if (nVerts > m_nTexSizeX / 3)
+				nVerts = m_nTexSizeX / 3;
+
+            sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts);	// only call this once nVerts is final!
+
+			if (m_pState->m_bModWaveAlphaByVolume)
+				alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+			if (alpha < 0) alpha = 0;
+			if (alpha > 1) alpha = 1;
+			//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+			{
+				float ang = -0.75;	// from -PI/2 to PI/2
+				float dx = cosf(ang);
+				float dy = sinf(ang);
+
+				float edge_x[2], edge_y[2];
+
+				//edge_x[0] = fWavePosX - dx*3.0f;
+				//edge_y[0] = fWavePosY - dy*3.0f;
+				//edge_x[1] = fWavePosX + dx*3.0f;
+				//edge_y[1] = fWavePosY + dy*3.0f;
+				edge_x[0] = fWavePosX * cosf(ang + 1.57f) - dx * 3.0f;
+				edge_y[0] = fWavePosX * sinf(ang + 1.57f) - dy * 3.0f;
+				edge_x[1] = fWavePosX * cosf(ang + 1.57f) + dx * 3.0f;
+				edge_y[1] = fWavePosX * sinf(ang + 1.57f) + dy * 3.0f;
+
+				for (i = 0; i < 2; i++)	// for each point defining the line
+				{
+					// clip the point against 4 edges of screen
+					// be a bit lenient (use +/-1.1 instead of +/-1.0)
+					//	 so the dual-wave doesn't end too soon, after the channels are moved apart
+					for (int j = 0; j < 4; j++)
+					{
+						float t;
+						bool bClip = false;
+
+						switch (j)
+						{
+						case 0:
+							if (edge_x[i] > 1.1f)
+							{
+								t = (1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 1:
+							if (edge_x[i] < -1.1f)
+							{
+								t = (-1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 2:
+							if (edge_y[i] > 1.1f)
+							{
+								t = (1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 3:
+							if (edge_y[i] < -1.1f)
+							{
+								t = (-1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+								bClip = true;
+							}
+							break;
+						}
+
+						if (bClip)
+						{
+							float dx = edge_x[i] - edge_x[1 - i];
+							float dy = edge_y[i] - edge_y[1 - i];
+							edge_x[i] = edge_x[1 - i] + dx * t;
+							edge_y[i] = edge_y[1 - i] + dy * t;
+						}
+					}
+				}
+
+				dx = (edge_x[1] - edge_x[0]) / (float)nVerts;
+				dy = (edge_y[1] - edge_y[0]) / (float)nVerts;
+				float ang2 = atan2f(dy, dx);
+				float perp_dx = cosf(ang2 + 1.57f);
+				float perp_dy = sinf(ang2 + 1.57f);
+
+
+				for (i = 0; i < nVerts; i++)
+				{
+					v[i].x = edge_x[0] + dx * i + perp_dx * 0.35f * fL[i + sample_offset];
+					v[i].y = edge_y[0] + dy * i + perp_dy * 0.35f * fL[i + sample_offset];
+					//v[i].Diffuse = color;
+				}
+
+
+		////////////////\\\\\\\\\\\\\\\\\\\\\
+
+				float ang3 = 0.75;	// from -PI/2 to PI/2
+				float dx3 = cosf(ang3);
+				float dy3 = sinf(ang3);
+
+				float edge_x3[2], edge_y3[2];
+
+				edge_x3[0] = fWavePosX * cosf(ang3 + 1.57f) - dx3 * 3.0f;
+				edge_y3[0] = fWavePosX * sinf(ang3 + 1.57f) - dy3 * 3.0f;
+				edge_x3[1] = fWavePosX * cosf(ang3 + 1.57f) + dx3 * 3.0f;
+				edge_y3[1] = fWavePosX * sinf(ang3 + 1.57f) + dy3 * 3.0f;
+
+				for (i = 0; i < 2; i++)	// for each point defining the line
+				{
+					for (int j = 0; j < 4; j++)
+					{
+						float t;
+						bool bClip = false;
+
+						switch (j)
+						{
+						case 0:
+							if (edge_x3[i] > 1.1f)
+							{
+								t = (1.1f - edge_x3[1 - i]) / (edge_x3[i] - edge_x3[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 1:
+							if (edge_x3[i] < -1.1f)
+							{
+								t = (-1.1f - edge_x3[1 - i]) / (edge_x3[i] - edge_x3[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 2:
+							if (edge_y3[i] > 1.1f)
+							{
+								t = (1.1f - edge_y3[1 - i]) / (edge_y3[i] - edge_y3[1 - i]);
+								bClip = true;
+							}
+							break;
+						case 3:
+							if (edge_y3[i] < -1.1f)
+							{
+								t = (-1.1f - edge_y3[1 - i]) / (edge_y3[i] - edge_y3[1 - i]);
+								bClip = true;
+							}
+							break;
+						}
+
+						if (bClip)
+						{
+							float dx3 = edge_x3[i] - edge_x3[1 - i];
+							float dy3 = edge_y3[i] - edge_y3[1 - i];
+							edge_x3[i] = edge_x3[1 - i] + dx3 * t;
+							edge_y3[i] = edge_y3[1 - i] + dy3 * t;
+						}
+					}
+				}
+
+				dx3 = (edge_x3[1] - edge_x3[0]) / (float)nVerts;
+				dy3 = (edge_y3[1] - edge_y3[0]) / (float)nVerts;
+				float ang4 = atan2f(dy3, dx3);
+				float perp_dx3 = cosf(ang4 + 1.57f);
+				float perp_dy3 = sinf(ang4 + 1.57f);
+
+				for (i = 0; i < nVerts; i++)
+				{
+					v[i + nVerts].x = edge_x3[0] + dx3 * i + perp_dx3 * (0.35f * fR[i + sample_offset]);
+					v[i + nVerts].y = edge_y3[0] + dy3 * i + perp_dy3 * (0.35f * fR[i + sample_offset]);
+					//v[i+nVerts].Diffuse = color;
+				}
+
+
+
+				nBreak = nVerts;
+				nVerts *= 2;
+			}
+
+
+			break;
+
+
+			case 11:
+			// vertical dual wave
+				nVerts /= 2;
+
+				if (nVerts > m_nTexSizeX / 3)
+					nVerts = m_nTexSizeX / 3;
+
+				sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts);	// only call this once nVerts is final!
+
+				if (m_pState->m_bModWaveAlphaByVolume)
+					alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+				if (alpha < 0) alpha = 0;
+				if (alpha > 1) alpha = 1;
+				//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+				{
+					float ang = 1.57;	// from -PI/2 to PI/2
+					float dx = cosf(ang);
+					float dy = sinf(ang);
+
+					float edge_x[2], edge_y[2];
+
+					//edge_x[0] = fWavePosX - dx*3.0f;
+					//edge_y[0] = fWavePosY - dy*3.0f;
+					//edge_x[1] = fWavePosX + dx*3.0f;
+					//edge_y[1] = fWavePosY + dy*3.0f;
+					edge_x[0] = fWavePosX * cosf(ang + 1.57f) - dx * 3.0f;
+					edge_y[0] = fWavePosX * sinf(ang + 1.57f) - dy * 3.0f;
+					edge_x[1] = fWavePosX * cosf(ang + 1.57f) + dx * 3.0f;
+					edge_y[1] = fWavePosX * sinf(ang + 1.57f) + dy * 3.0f;
+
+					for (i = 0; i < 2; i++)	// for each point defining the line
+					{
+						// clip the point against 4 edges of screen
+						// be a bit lenient (use +/-1.1 instead of +/-1.0)
+						//	 so the dual-wave doesn't end too soon, after the channels are moved apart
+						for (int j = 0; j < 4; j++)
+						{
+							float t;
+							bool bClip = false;
+
+							switch (j)
+							{
+							case 0:
+								if (edge_x[i] > 1.1f)
+								{
+									t = (1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 1:
+								if (edge_x[i] < -1.1f)
+								{
+									t = (-1.1f - edge_x[1 - i]) / (edge_x[i] - edge_x[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 2:
+								if (edge_y[i] > 1.1f)
+								{
+									t = (1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 3:
+								if (edge_y[i] < -1.1f)
+								{
+									t = (-1.1f - edge_y[1 - i]) / (edge_y[i] - edge_y[1 - i]);
+									bClip = true;
+								}
+								break;
+							}
+
+							if (bClip)
+							{
+								float dx = edge_x[i] - edge_x[1 - i];
+								float dy = edge_y[i] - edge_y[1 - i];
+								edge_x[i] = edge_x[1 - i] + dx * t;
+								edge_y[i] = edge_y[1 - i] + dy * t;
+							}
+						}
+					}
+
+					dx = (edge_x[1] - edge_x[0]) / (float)nVerts;
+					dy = (edge_y[1] - edge_y[0]) / (float)nVerts;
+					float ang2 = atan2f(dy, dx);
+					float perp_dx = cosf(ang2 + 1.57f);
+					float perp_dy = sinf(ang2 + 1.57f);
+
+
+					for (i = 0; i < nVerts; i++)
+					{
+						v[i].x = edge_x[0] - 0.45 + dx * i + perp_dx * 0.35f * fL[i + sample_offset];
+						v[i].y = edge_y[0] + dy * i + perp_dy * 0.35f * fL[i + sample_offset];
+						//v[i].Diffuse = color;
+					}
+
+
+					////////////////\\\\\\\\\\\\\\\\\\\\\
+
+
+					float ang3 = 1.57;	// from -PI/2 to PI/2
+					float dx3 = cosf(ang3);
+					float dy3 = sinf(ang3);
+
+					float edge_x3[2], edge_y3[2];
+
+					edge_x3[0] = fWavePosX * cosf(ang3 + 1.57f) - dx3 * 3.0f;
+					edge_y3[0] = fWavePosX * sinf(ang3 + 1.57f) - dy3 * 3.0f;
+					edge_x3[1] = fWavePosX * cosf(ang3 + 1.57f) + dx3 * 3.0f;
+					edge_y3[1] = fWavePosX * sinf(ang3 + 1.57f) + dy3 * 3.0f;
+
+					for (i = 0; i < 2; i++)	// for each point defining the line
+					{
+						for (int j = 0; j < 4; j++)
+						{
+							float t;
+							bool bClip = false;
+
+							switch (j)
+							{
+							case 0:
+								if (edge_x3[i] > 1.1f)
+								{
+									t = (1.1f - edge_x3[1 - i]) / (edge_x3[i] - edge_x3[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 1:
+								if (edge_x3[i] < -1.1f)
+								{
+									t = (-1.1f - edge_x3[1 - i]) / (edge_x3[i] - edge_x3[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 2:
+								if (edge_y3[i] > 1.1f)
+								{
+									t = (1.1f - edge_y3[1 - i]) / (edge_y3[i] - edge_y3[1 - i]);
+									bClip = true;
+								}
+								break;
+							case 3:
+								if (edge_y3[i] < -1.1f)
+								{
+									t = (-1.1f - edge_y3[1 - i]) / (edge_y3[i] - edge_y3[1 - i]);
+									bClip = true;
+								}
+								break;
+							}
+
+							if (bClip)
+							{
+								float dx3 = edge_x3[i] - edge_x3[1 - i];
+								float dy3 = edge_y3[i] - edge_y3[1 - i];
+								edge_x3[i] = edge_x3[1 - i] + dx3 * t;
+								edge_y3[i] = edge_y3[1 - i] + dy3 * t;
+							}
+						}
+					}
+
+					dx3 = (edge_x3[1] - edge_x3[0]) / (float)nVerts;
+					dy3 = (edge_y3[1] - edge_y3[0]) / (float)nVerts;
+					float ang4 = atan2f(dy3, dx3);
+					float perp_dx3 = cosf(ang4 + 1.57f);
+					float perp_dy3 = sinf(ang4 + 1.57f);
+
+					for (i = 0; i < nVerts; i++)
+					{
+						v[i + nVerts].x = edge_x3[0] + 0.45 + dx3 * i + perp_dx3 * (0.35f * fR[i + sample_offset]);
+						v[i + nVerts].y = edge_y3[0] + dy3 * i + perp_dy3 * (0.35f * fR[i + sample_offset]);
+						//v[i+nVerts].Diffuse = color;
+					}
+
+					////////////////\\\\\\\\\\\\\\\\\\\\\
+
+
+					nBreak = nVerts;
+					nVerts *= 2;
+				}
+
+
+				break;
+
+
+				case 12:
+					// x-y osc. that goes around in a spiral, in time, but skewed
+
+					alpha *= 1.25f;
+					if (m_pState->m_bModWaveAlphaByVolume)
+						alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+					if (alpha < 0) alpha = 0;
+					if (alpha > 1) alpha = 1;
+					//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+					nVerts /= 2;
+					for (i = 0; i < nVerts; i++)
+					{
+						//float rad = 0.13f + 0.43f * fR[i] + fWaveParam2 + perp_dy3/2 ;
+						//float ang = fL[i + 32] * 3.57f + GetTime() * perp_dx3/2;
+						//v[i].x = rad * cosf(ang+ alpha) * m_fAspectY + fWavePosX ;		// 0.75 = adj. for aspect ratio
+						//v[i].y = rad * sinf(ang) * m_fAspectX + fWavePosY ;
+						//v[i].Diffuse = color;//(D3DCOLOR_RGBA_01(cr, cg, cb, alpha*min(1, max(0, fL[i])));
+						float rad = 0.63f + 0.23f * fR[i] + fWaveParam2;
+						float ang = fL[i + 32] * 0.9f + GetTime() * 3.3f;
+						v[i].x = rad * cosf(ang + alpha) * m_fAspectY + fWavePosX;		// 0.75 = adj. for aspect ratio
+						v[i].y = rad * sinf(ang) * m_fAspectX + fWavePosY;
+					}
+
+
+				break;
 		}
 
 		if (it==0)
