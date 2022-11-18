@@ -3286,7 +3286,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
 			//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
 
 			{
-				float ang = -0.75;	// from -PI/2 to PI/2
+				float ang = -0.75 + fWaveParam2*3.15;	// from -PI/2 to PI/2
 				float dx = cosf(ang);
 				float dy = sinf(ang);
 
@@ -3370,7 +3370,7 @@ void CPlugin::DrawWave(float *fL, float *fR)
 
 		////////////////\\\\\\\\\\\\\\\\\\\\\
 
-				float ang3 = 0.75;	// from -PI/2 to PI/2
+				float ang3 = 0.75 + fWaveParam2*3.15;	// from -PI/2 to PI/2
 				float dx3 = cosf(ang3);
 				float dy3 = sinf(ang3);
 
