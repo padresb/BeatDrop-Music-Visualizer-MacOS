@@ -6,6 +6,7 @@
 
 The improved visualizer is here!
 In this repo will fix the bug, adding new features and more stuff to BeatDrop Music Visualizer.
+- This is a continued development because the original developer, Maxim Volskiy (@mvsoft74) has gone silent.
 
 Things fixed:
 * The y/n decision bug
@@ -30,7 +31,7 @@ Things that will be fixed:
 
 # BEFORE YOU RUN BEATDROP
 
-Please download and install [DirectX Software Development Kit](https://www.microsoft.com/en-us/download/details.aspx?id=6812), [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) and All the Microsoft Visual C++ Redistributable Versions: https://aka.ms/vs/17/release/vc_redist.x64.exe from https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170 first.
+Please download and install [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) first.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
