@@ -310,5 +310,5 @@ per_pixel_1=cx = .25+.5*above(x,.5);
 per_pixel_2=a=6;
 per_pixel_3=b=(x*a)%(a+1);
 per_pixel_4=cx = b/a;
-per_pixel_5=cy =.0.5-(b%2)*.05+.88/cy = .5+sin(time)*(above(x,.5)-.5)*1.5;
+per_pixel_5=cy =0.5-(b%2)*.05+.88/cy = .5+sin(time)*(above(x,.5)-.5)*1.5;
 per_pixel_6=rot =(.16*(above(x,.5)-.5)-sqr(y-.5)*.16);//*sin(time+bass_att*.5);
