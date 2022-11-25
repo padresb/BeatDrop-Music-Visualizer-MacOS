@@ -12,6 +12,9 @@
 #include <math.h>
 #include <dwmapi.h>
 
+#include <ShellScalingApi.h> // for dpi awareness
+#pragma comment(lib, "shcore.lib") // for dpi awareness
+
 #include "plugin.h"
 #include "resource.h"
 
@@ -298,6 +301,9 @@ unsigned __stdcall CreateWindowAndRun(void* data) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _CrtSetBreakAlloc(60);
 #endif
+    
+    // Set Per Monitor awareness
+    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
     // Register the windows class
     WNDCLASSW wndClass;
