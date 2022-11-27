@@ -4185,6 +4185,7 @@ void CPlugin::MyRenderUI(
         // d) debug information
 		if (m_bShowDebugInfo)
 		{
+			SelectFont(SIMPLE_FONT);
             	swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
                 swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_BASS), (float)(*m_pState->var_pf_bass));

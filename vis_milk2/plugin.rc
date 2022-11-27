@@ -255,6 +255,9 @@ BEGIN
                             "Please exit the visualizer before running the config panel."
     IDS_FPS                 "fps"
     IDS_PF_MONITOR          "pf monitor"
+	IDS_PF_BASS             "bass"
+    IDS_PF_MID              "mid"
+    IDS_PF_TREB             "treb"
     IDS_PRESS_F9_TO_HIDE_SHADER_QREF 
                             "-- press F9 to hide shader Quick Reference --\n"
     IDS_PRESS_F9_TO_SHOW_SHADER_QREF 
