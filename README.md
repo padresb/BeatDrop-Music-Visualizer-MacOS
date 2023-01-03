@@ -27,8 +27,8 @@ Features to be added:
 * Spout Support ([Look DrO's Spout Addition for WACUP](https://github.com/WACUP/vis_milk2/commit/8bc232a670442c79713a15881504bf2813ef8554), [leadedge's Spout Version of BeatDrop](https://github.com/leadedge/BeatDrop))
 * Blending the visualizer with Webcam (Example: [Webcam > Spout > NestDrop on Reddit](https://www.reddit.com/r/NestDrop/comments/rh6zew/webcam_spout_nestdrop/) - F2 Hotkey
 
-Things that will be fixed:
-* Doing a preset mashup will cause an error message on Windows 11. [SOLVED: Anyone who uses Visual Studio, before you compile the exe file, you must change from debug to release (or build the .exe file without debug infos)].
+Before compiling the code:
+* Anyone who uses Visual Studio 2019, please change from debug to release and build it.
 
 # BEFORE YOU RUN BEATDROP
 
