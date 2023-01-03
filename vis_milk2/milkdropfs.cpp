@@ -3664,6 +3664,168 @@ void CPlugin::DrawWave(float *fL, float *fR)
 
 
 				break;
+
+				//NEW WAVEFORMS 2023
+				case 13: // Star Wave, MilkDrop2077 -----------------------------------------------------------------------------------------------------------
+
+					nVerts /= 2;
+					sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts * 12/10);// only call this once nVerts is final!
+
+					if (m_pState->m_bModWaveAlphaByVolume)
+						alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+					if (alpha < 0) alpha = 0;
+					if (alpha > 1) alpha = 1;
+					//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+					{
+						float inv_nverts_minus_one = 1.0f / (float)(nVerts - 1);
+
+						for (i = 0; i < nVerts; i++)
+						{
+							float rad = 0.7f + 0.4f * fR[i + sample_offset] + fWaveParam2;
+							float ang = (i)*inv_nverts_minus_one * 6.28f + GetTime() * 0.2f;
+							if (i < nVerts / rad)
+							{
+								float mix = i / (nVerts * 0.1f);
+								mix = 0.5f - 0.5f * cosf(mix * 3.1416f);
+								float rad_2 = 0.5f + 0.4f * fR[i + nVerts + sample_offset] + fWaveParam2;
+								rad = rad_2 * (1.0f - mix) + rad * (mix);
+							}
+							v[i].x = rad * cosf(ang) * m_fAspectY + fWavePosX;// 0.75 = adj. for aspect ratio
+							v[i].y = rad * sinf(ang) * m_fAspectX + fWavePosY;
+							//v[i].Diffuse = color;
+						}
+					}
+
+					// dupe last vertex to connect the lines; skip if blending
+					if (!m_pState->m_bBlending)
+					{
+						nVerts++;
+						memcpy(&v[nVerts - 1], &v[0], sizeof(WFVERTEX));
+					}
+
+					break;
+
+				case 14: // Flower Wave, MilkDrop2077 -------------------------------------------------------------------------------------------------------------
+
+					nVerts /= 2;
+					sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts * 12/10);// only call this once nVerts is final!
+
+					if (m_pState->m_bModWaveAlphaByVolume)
+						alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+					if (alpha < 0) alpha = 0;
+					if (alpha > 1) alpha = 1;
+					//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+					{
+						float inv_nverts_minus_one = 1.0f / (float)(nVerts - 1);
+
+						for (i = 0; i < nVerts; i++)
+						{
+							float rad = 0.7f + 0.7f * fR[i + sample_offset] + fWaveParam2;
+							float ang = (i)*inv_nverts_minus_one * 6.28f + GetTime() * 0.2f;
+							ang == ang / 2;
+							rad == rad / 2;
+							if (i < nVerts / rad)
+							{
+								float mix = i / (nVerts * 0.1f);
+								//mix = 0.7f - 0.7f * cosf(mix * 3.1416f) - sinf((GetTime()/10));
+								//mix = 0.7f - 0.7f * cosf(mix * 1.1416f) - sinf((GetTime())/8);
+								//mix = 0.7f - 0.7f * cosf(mix*2 * 3.1416f); //flower, more leaves
+								mix = 0.7f - 0.7f * cosf(mix * 3.1416f);   //flower
+
+								float rad_2 = 0.7f + 0.7f * fR[i + nVerts + sample_offset] + fWaveParam2;
+								//rad = rad_2 * (1.0f - mix) + rad * (mix);
+									//rad = rad_2 * (1.0f - mix) + rad * (mix) /5; // div5 optional
+								rad = rad_2 * (1.0f - mix) + rad * (mix * 2) / 8;
+							}
+							//v[i].x = rad * (cosf(GetTime()*ang)/3) * m_fAspectY + fWavePosX;// 0.75 = adj. for aspect ratio
+							//v[i].y = rad * sinf(GetTime()*ang) * m_fAspectX + fWavePosY;
+							//v[i].Diffuse = color;
+							//v[i].x = rad * cosf(ang* 2) * m_fAspectY + fWavePosX;//
+							v[i].x = rad * cosf(ang * 3.1416f) * m_fAspectY / 1.5 + fWavePosX * cosf(3.1416f);// 0.75 = adj. for aspect ratio
+							v[i].y = rad * sinf(ang - GetTime() / 3) * m_fAspectX / 1.5 + fWavePosY * cosf(3.1416f);
+						}
+					}
+
+					// dupe last vertex to connect the lines; skip if blending
+					if (!m_pState->m_bBlending)
+					{
+						nVerts++;
+						memcpy(&v[nVerts - 1], &v[0], sizeof(WFVERTEX));
+					}
+
+					break;
+
+					/*
+					ALTERNATIVE:
+					nVerts /= 2;
+					sample_offset = (NUM_WAVEFORM_SAMPLES - nVerts) / 2;//mysound.GoGoAlignatron(nVerts * 12/10);// only call this once nVerts is final!
+
+					if (m_pState->m_bModWaveAlphaByVolume)
+					alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+					if (alpha < 0) alpha = 0;
+					if (alpha > 1) alpha = 1;
+					//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+					{
+					float inv_nverts_minus_one = 1.0f / (float)(nVerts - 1);
+
+					for (i = 0; i < nVerts; i++)
+					{
+					float rad = 0.7f + 0.4f * fR[i + sample_offset] + fWaveParam2;
+					float ang = (i)* inv_nverts_minus_one * 6.28f + GetTime() * 0.2f;
+					if (i < nVerts / rad)
+					{
+					float mix = i / (nVerts * 0.1f);
+					mix = 0.5f - 0.5f * cosf(mix * 3.1416f);
+					float rad_2 = 0.5f + 0.4f * fR[i + nVerts + sample_offset] + fWaveParam2/(mix*3);
+					rad = rad_2 * (1.0f - mix) + rad * (mix);
+					  //rad = rad_2 * (1.0f - mix) + rad * (GetTime() / 3); // BIG
+					}
+					v[i].x = rad * cosf(ang*2) * m_fAspectY + fWavePosX;// 0.75 = adj. for aspect ratio
+					v[i].y = rad * sinf(ang - GetTime() / 3) * m_fAspectX + fWavePosY;
+					//v[i].Diffuse = color;
+					}
+					}
+
+					// dupe last vertex to connect the lines; skip if blending
+					if (!m_pState->m_bBlending)
+					{
+					nVerts++;
+					memcpy(&v[nVerts - 1], &v[0], sizeof(WFVERTEX));
+					}
+
+					break;*/
+
+				case 15: // Lasso Wave, MilkDrop2077 --------------------------------------------------------------------------------------------------------------
+
+				//m_pState->m_wave[i].Import(NULL, m_waitstring.szText, 0);
+				//break;
+					alpha *= 1.25f;
+					if (m_pState->m_bModWaveAlphaByVolume)
+						alpha *= ((mysound.imm_rel[0] + mysound.imm_rel[1] + mysound.imm_rel[2]) * 0.333f - m_pState->m_fModWaveAlphaStart.eval(GetTime())) / (m_pState->m_fModWaveAlphaEnd.eval(GetTime()) - m_pState->m_fModWaveAlphaStart.eval(GetTime()));
+					if (alpha < 0) alpha = 0;
+					if (alpha > 1) alpha = 1;
+					//color = D3DCOLOR_RGBA_01(cr, cg, cb, alpha);
+
+					nVerts /= 2;
+
+					for (i = 0; i < nVerts; i++)
+					{
+						float rad = 0.53f + 0.43f * fR[i] + fWaveParam2;
+						float ang = fL[i + 32] * 1.57f + GetTime() * 2.0f;
+						float t = GetTime() / ang;
+						//ball
+						//v[i].x = cosf(ang* GetTime())*3 * m_fAspectY/3 + fWavePosX;// 0.75 = adj. for aspect ratio
+						//v[i].y = sin(rad* GetTime()) *3 * sinf(ang) * m_fAspectX/3 + fWavePosY;
+						//v[i].x = cos(GetTime()) / 2 + cosf(ang * 2 +tanf(t))*m_fAspectY / 2.8 + fWavePosX
+						v[i].x = cos(GetTime()) / 2 + cosf(ang * 2 + tanf(t));
+						v[i].y = sin(GetTime()) * 2 * sinf(ang * 3.14) * m_fAspectX / 2.8 + fWavePosY;
+						//v[i].Diffuse = color;//(D3DCOLOR_RGBA_01(cr, cg, cb, alpha*min(1, max(0, fL[i])));
+					}
+
+					break;
 		}
 
 		if (it==0)
