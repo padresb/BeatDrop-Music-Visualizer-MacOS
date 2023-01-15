@@ -1,7 +1,7 @@
  GENERAL:
 
    ESC             exit help / menus
-   ALT + ENTER       toggle fullscreen
+   ALT + ENTER       toggle fullscreen (or double-click)
    ALT + SHIFT       toggle multiple monitor stretch
 
  PRESETS:
@@ -15,6 +15,8 @@
    S               save new preset
    A               do random mini-mash-up
    D               toggle warp & comp shader locks
+   SHIFT + !       randomize warp shader
+   SHIFT + @       randomize comp shader
 
  INFO:
 
@@ -25,7 +27,7 @@
    
  HOTKEYS:
 
-   F3   toggle fps to 30/60/90/120/144/240/360/Unlimited
+   F3   toggle fps to 30/60/90/120/144/240/360/unlimited
    F7   always on top
    F10  freeze/unfreeze screen (only on windowed)
    N    show per-frame monitor
