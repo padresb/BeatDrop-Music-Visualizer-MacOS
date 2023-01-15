@@ -7323,8 +7323,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 	    m_pOldState = temp;
 
         DWORD ApplyFlags = STATE_ALL;
-        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pState->Import(m_szCurrentPresetFile, GetTime(), m_pOldState, ApplyFlags);
 
@@ -7357,8 +7357,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
 
         DWORD ApplyFlags = STATE_ALL;
-        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pNewState->Import(szPresetFilename, GetTime(), m_pOldState, ApplyFlags);
 
