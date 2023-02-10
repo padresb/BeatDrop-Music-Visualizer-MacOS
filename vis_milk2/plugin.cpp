@@ -8806,9 +8806,21 @@ void CPlugin::DoCustomSoundAnalysis()
 	for (i=0; i<3; i++)
 	{
 		// note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-		int start = MY_FFT_SAMPLES*i/6;
-		int end   = MY_FFT_SAMPLES*(i+1)/6;
+		int start = MY_FFT_SAMPLES*i/171;
+		int end   = MY_FFT_SAMPLES*(i+1)/171;
 		int j;
+		
+		if (i == 1)
+       	{
+     		start = MY_FFT_SAMPLES * i / 36;
+		end = MY_FFT_SAMPLES * (i + 1) / 36;
+       	}
+
+        	if (i == 2)
+        {
+            	start = MY_FFT_SAMPLES*i/6;
+            	end = MY_FFT_SAMPLES*(i + 1)/6;
+        }
 
 		mysound.imm[i] = 0;
 
