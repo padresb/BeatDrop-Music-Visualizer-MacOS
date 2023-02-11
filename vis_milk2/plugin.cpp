@@ -8806,14 +8806,14 @@ void CPlugin::DoCustomSoundAnalysis()
 	for (i=0; i<3; i++)
 	{
 		// note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-		int start = MY_FFT_SAMPLES*i/171;
-		int end   = MY_FFT_SAMPLES*(i+1)/171;
+		int start = MY_FFT_SAMPLES*i/190;
+		int end   = MY_FFT_SAMPLES*(i+1)/190;
 		int j;
 		
 		if (i == 1)
        	{
-     		start = MY_FFT_SAMPLES * i / 36;
-		end = MY_FFT_SAMPLES * (i + 1) / 36;
+     		start = MY_FFT_SAMPLES * i / 63;
+		end = MY_FFT_SAMPLES * (i + 1) / 63;
        	}
 
         	if (i == 2)
