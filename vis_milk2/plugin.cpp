@@ -7323,8 +7323,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 	    m_pOldState = temp;
 
         DWORD ApplyFlags = STATE_ALL;
-        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pState->Import(m_szCurrentPresetFile, GetTime(), m_pOldState, ApplyFlags);
 
@@ -7357,8 +7357,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
 
         DWORD ApplyFlags = STATE_ALL;
-        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pNewState->Import(szPresetFilename, GetTime(), m_pOldState, ApplyFlags);
 
@@ -8806,21 +8806,9 @@ void CPlugin::DoCustomSoundAnalysis()
 	for (i=0; i<3; i++)
 	{
 		// note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-		int start = MY_FFT_SAMPLES*i/190;
-		int end   = MY_FFT_SAMPLES*(i+1)/190;
+		int start = MY_FFT_SAMPLES*i/6;
+		int end   = MY_FFT_SAMPLES*(i+1)/6;
 		int j;
-		
-		if (i == 1)
-       	{
-     		start = MY_FFT_SAMPLES * i / 63;
-		end = MY_FFT_SAMPLES * (i + 1) / 63;
-       	}
-
-        	if (i == 2)
-        {
-            	start = MY_FFT_SAMPLES*i/6;
-            	end = MY_FFT_SAMPLES*(i + 1)/6;
-        }
 
 		mysound.imm[i] = 0;
 
