@@ -8803,12 +8803,27 @@ void CPlugin::DoCustomSoundAnalysis()
 	//for (i=0; i<MY_FFT_SAMPLES; i++) fSpecLeft[i] = sqrtf(fSpecLeft[i]*fSpecLeft[i] + fSpecTemp[i]*fSpecTemp[i]);
 
 	// sum spectrum up into 3 bands
+	//Incubo_'s fixed beat detection (pretty perfect, accurate)
 	for (i=0; i<3; i++)
 	{
-		// note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-		int start = MY_FFT_SAMPLES*i/6;
-		int end   = MY_FFT_SAMPLES*(i+1)/6;
+	int start = MY_FFT_SAMPLES*i/192;
+        int end = MY_FFT_SAMPLES*(i+1)/192;
 		int j;
+		//bass
+
+        if (i == 1)
+        {
+            start = MY_FFT_SAMPLES * i / 64;
+            end = MY_FFT_SAMPLES * (i + 1) / 64;
+		//mid
+        }
+
+        if (i == 2)
+        {
+            start = MY_FFT_SAMPLES*i/6;
+            end = MY_FFT_SAMPLES*(i + 1)/6;
+		//treb as normal beat detection code
+        }
 
 		mysound.imm[i] = 0;
 
