@@ -6663,7 +6663,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	}
 
-	if (wParam == keyMappings[3] || wParam == keyMappings[4])	// 'y' or 'Y'
+	if (wParam == 'y' || wParam == 'Y')	// 'y' or 'Y'
 	{
 		m_nNumericInputMode   = NUMERIC_INPUT_MODE_CUST_MSG;
 		m_nNumericInputNum    = 0;
