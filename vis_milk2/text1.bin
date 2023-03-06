@@ -29,3 +29,5 @@
    F7   always on top
    F10  freeze/unfreeze screen (only on windowed)
    N    show per-frame monitor
+   K    enter sprite mode (broken)
+   Y    enter custom message mode
