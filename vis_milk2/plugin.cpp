@@ -8793,13 +8793,19 @@ void CPlugin::DoCustomSoundAnalysis()
     memcpy(mysound.fWave[1], m_sound.fWaveform[1], sizeof(float)*576);
 
     // do our own [UN-NORMALIZED] fft
-	float fWaveLeft[576];
+	float fWaveLeft[576]; //left channel
+	float fWaveRight[576] //right channel
 	for (int i=0; i<576; i++)
-        fWaveLeft[i] = m_sound.fWaveform[0][i];
+	{
+        	fWaveLeft[i] = m_sound.fWaveform[0][i];
+		fWaveRight[i] = m_sound.fWaveform[1][i];
+	}
 
 	memset(mysound.fSpecLeft, 0, sizeof(float)*MY_FFT_SAMPLES);
+	memset(mysound.fSpecRight, 0, sizeof(float)*MY_FFT_SAMPLES);
 
 	myfft.time_to_frequency_domain(fWaveLeft, mysound.fSpecLeft);
+	myfft.time_to_frequency_domain(fWaveRight, mysound.fSpecRight);
 	//for (i=0; i<MY_FFT_SAMPLES; i++) fSpecLeft[i] = sqrtf(fSpecLeft[i]*fSpecLeft[i] + fSpecTemp[i]*fSpecTemp[i]);
 
 	// sum spectrum up into 3 bands
@@ -8828,7 +8834,7 @@ void CPlugin::DoCustomSoundAnalysis()
 		mysound.imm[i] = 0;
 
 		for (j=start; j<end; j++)
-			mysound.imm[i] += mysound.fSpecLeft[j];
+			mysound.imm[i] += (mysound.fSpecLeft[j] + mysound.fSpecRight[j])/2; //I made the beat detection reacting on both channels, like projectM. Why don't you try?
 	}
 
 	// do temporal blending to create attenuated and super-attenuated versions
