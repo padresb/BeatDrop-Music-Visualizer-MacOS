@@ -8826,9 +8826,9 @@ void CPlugin::DoCustomSoundAnalysis()
 
         if (i == 2)
         {
-            start = MY_FFT_SAMPLES*i/6;
-            end = MY_FFT_SAMPLES*(i + 1)/6;
-		//treb as normal beat detection code
+            start = MY_FFT_SAMPLES*i/12;
+            end = MY_FFT_SAMPLES*(i + 1)/12;
+		//treb
         }
 
 		mysound.imm[i] = 0;
