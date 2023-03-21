@@ -31,7 +31,8 @@ Features to be added:
 * Playback Hotkeys that can be controlled on any media players
 * DeepMash Mode
 * Pressing 'C' to add random values of ret /= float3(r, g, b); in the final of the comp shader code (with 30% chance to add ret /= float3(bass, mid, treb));
-* New transitionsand choosing any transitions what you want by pressing P
+* New transitions
+and choosing any transitions what you want by pressing P
 
 Before compiling the code:
 * Anyone who uses Visual Studio 2019, please change from debug to release and build it.
@@ -68,7 +69,7 @@ Use BeatDrop with your favourite
   ...
 
 ## System Requirements
-* Windows 11, Windows 10, Windows 8.1 or Windows 7 SP1
+* Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista, Windows XP, Windows ME, Windows 98, Windows 95
 
 * WASAPI-compatible sound card
 
