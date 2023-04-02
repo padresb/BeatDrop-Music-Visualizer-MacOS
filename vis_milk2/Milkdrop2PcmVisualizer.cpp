@@ -30,8 +30,8 @@
 #define DLL_EXPORT __declspec(dllexport)
 //#define COMPILE_AS_DLL
 #define SAMPLE_SIZE 576
-#define DEFAULT_WIDTH 640;
-#define DEFAULT_HEIGHT 480;
+#define DEFAULT_WIDTH 720;
+#define DEFAULT_HEIGHT 720;
 
 CPlugin g_plugin;
 HINSTANCE api_orig_hinstance = nullptr;
