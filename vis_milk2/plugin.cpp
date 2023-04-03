@@ -2845,7 +2845,7 @@ bool CPlugin::EvictSomeTexture()
     return true;
 }
 
-std::wstring texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", };
+std::wstring texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", L"jfif", };
 const wchar_t szExtsWithSlashes[] = L"jpg|png|dds|etc.";
 typedef std::vector<std::wstring> StringVec;
 bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //should be MAX_PATH chars
