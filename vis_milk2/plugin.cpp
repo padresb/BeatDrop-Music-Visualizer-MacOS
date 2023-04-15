@@ -1127,7 +1127,7 @@ void CPlugin::MyPreInitialize()
     std::wstring::size_type pos = std::wstring(buffer).find_last_of(L"\\/");
     std::wstring dir = std::wstring(buffer).substr(0, pos);
 
-    swprintf(m_szMilkdrop2Path, L"%s\\plugins\\%s", dir.c_str(), SUBDIR);
+    swprintf(m_szMilkdrop2Path, L"%s\\%s", dir.c_str(), SUBDIR);
     swprintf(m_szPresetDir, L"%spresets\\", m_szMilkdrop2Path);
 
     // note that the config dir can be under Program Files or Application Data!!
