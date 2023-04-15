@@ -37,9 +37,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //   compiled to, go to Project Settings -> Link tab -> and change the
 //   'output file name'.  Don't forget to do it for both Debug AND
 //   Release builds!
-#define SHORTNAME        "MilkDrop 2" // used as window caption for both MilkDrop and the config panel.  avoid numbers or punctuation; when 'integrate with winamp' option is enabled, these characters don't always work with all skins.
-#define LONGNAME         "MilkDrop v2.25c" // appears at bottom of config panel
-#define LONGNAMEW        L"MilkDrop v2.25c" // appears at bottom of config panel
+#define SHORTNAME        "BeatDrop" // used as window caption for both MilkDrop and the config panel.  avoid numbers or punctuation; when 'integrate with winamp' option is enabled, these characters don't always work with all skins.
+#define LONGNAME         "BeatDrop v1.2.4 RC2" // appears at bottom of config panel
+#define LONGNAMEW        L"BeatDrop v1.2.4 RC2" // appears at bottom of config panel
 
 // INT_VERSION is the major version #, multipled by 100 (ie. version 1.02
 // would be 102).  If the app goes to read in the INI file and sees that
@@ -57,18 +57,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // SUBDIR puts milkdrop's documentation, INI file, presets folder, etc.
 // in a subdir underneath Winamp\Plugins.
-#define SUBDIR  L"Milkdrop2\\"   //""
+#define SUBDIR  L"BeatDrop Resources\\"   //""
 
 // INIFILE is the name of the .INI file that will save the user's
 // config panel settings.  Do not include a path; just give the filename.
 // The actual file will be stored in the WINAMP\PLUGINS directory,
 // OR POSSIBLY c:\application data\...(user)...\winamp\plugins!!! - if
 // they have sep. settings for each user!
-#define INIFILE         L"milk2.ini"      //*** DO NOT PUT IN A SUBDIR because on save, if dir doesn't already exist,
+#define INIFILE         L"beatdrop.ini"      //*** DO NOT PUT IN A SUBDIR because on save, if dir doesn't already exist,
                                          //     it won't be able to save the INI file.
-#define MSG_INIFILE     L"milk2_msg.ini"  //*** could be in c:\program files\winamp\plugins, or in
-#define IMG_INIFILE     L"milk2_img.ini"  //                c:\application data\...user...\winamp\plugins !!
-#define ADAPTERSFILE	L"milk2_adapters.txt"
+#define MSG_INIFILE     L"beatdrop_msg.ini"  //*** could be in c:\program files\winamp\plugins, or in
+#define IMG_INIFILE     L"beatdrop_img.ini"  //                c:\application data\...user...\winamp\plugins !!
+#define ADAPTERSFILE	L"beatdrop_adapters.txt"
 
 // DOCFILE is the name of the documentation file that you'll write
 // for your users.  Do not include a path; just give the filename.
@@ -87,7 +87,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ***Note that the button will be invisible (on the config panel)
 // at runtime if this string is empty.***
-#define PLUGIN_WEB_URL  L"http://www.nullsoft.com/free/milkdrop/"   // set this to something like "http://www.myplugin.com/"
+#define PLUGIN_WEB_URL  L"http://www.geisswerks.com/milkdrop/"   // set this to something like "http://www.myplugin.com/"
 
 // The following two strings - AUTHOR_NAME and COPYRIGHT - will be used
 // in a little box in the config panel, to identify the author & copyright
@@ -100,7 +100,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // or applications that are running, so change this to something
 // that will probably be unique.  For example, if your plugin was
 // called Libido, then "LibidoClass" would probably be a safe bet.
-#define CLASSNAME       L"MilkDrop2"
+#define CLASSNAME       L"BeatDrop"
 
 // Here you can give names to the buttons (~tabs) along the top
 // of the config panel.  Each button, when clicked, will bring
