@@ -1,3 +1,5 @@
+BSD 3-Clause License
+
 APPLICABLE LICENSES
 -------------------
 
@@ -9,8 +11,6 @@ APPLICABLE LICENSES
 
 BEATDROP LICENSE
 -------------------
-
-BSD 3-Clause License
 
 Copyright (c) 2018 Maxim Volskiy and individual contributors
 All rights reserved.
