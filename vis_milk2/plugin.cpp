@@ -953,7 +953,7 @@ void CPlugin::MyPreInitialize()
 	m_nTexSizeY			= -1;	// -1 means "auto"
 	m_nTexBitsPerCh     =  8;
 	m_nGridX			= 64;//32;
-	m_nGridY			= 64;//24;
+	m_nGridY			= 32;//24;
 
 	m_bShowPressF1ForHelp = true;
 	//lstrcpy(m_szMonitorName, "[don't use multimon]");
@@ -1204,7 +1204,7 @@ void CPlugin::MyReadConfig()
 	m_bTexSizeWasAutoExact = (m_nTexSizeX == -1);
 	m_nTexBitsPerCh = GetPrivateProfileIntW(L"settings", L"nTexBitsPerCh", m_nTexBitsPerCh, pIni);
 	m_nGridX	= 64;  //GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni)
-	m_nGridY        = 64;  //m_nGridX*3/4
+	m_nGridY        = 32;  //m_nGridX*3/4
     m_nMaxPSVersion_ConfigPanel = GetPrivateProfileIntW(L"settings",L"MaxPSVersion",m_nMaxPSVersion_ConfigPanel,pIni);
     m_nMaxImages    = GetPrivateProfileIntW(L"settings",L"MaxImages",m_nMaxImages,pIni);
     m_nMaxBytes     = GetPrivateProfileIntW(L"settings",L"MaxBytes" ,m_nMaxBytes ,pIni);
@@ -7323,8 +7323,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 	    m_pOldState = temp;
 
         DWORD ApplyFlags = STATE_ALL;
-        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+         ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+         ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pState->Import(m_szCurrentPresetFile, GetTime(), m_pOldState, ApplyFlags);
 
@@ -8858,13 +8858,14 @@ void CPlugin::DoCustomSoundAnalysis()
 
 
 		// also get bass/mid/treble levels *relative to the past*
+		//changed all the values to 0 because it is a standalone program
 		if (fabsf(mysound.long_avg[i]) < 0.001f)
-			mysound.imm_rel[i] = 1.0f;
+			mysound.imm_rel[i] = 0.0f;
 		else
 			mysound.imm_rel[i]  = mysound.imm[i] / mysound.long_avg[i];
 
 		if (fabsf(mysound.long_avg[i]) < 0.001f)
-			mysound.avg_rel[i]  = 1.0f;
+			mysound.avg_rel[i]  = 0.0f;
 		else
 			mysound.avg_rel[i]  = mysound.avg[i] / mysound.long_avg[i];
 	}

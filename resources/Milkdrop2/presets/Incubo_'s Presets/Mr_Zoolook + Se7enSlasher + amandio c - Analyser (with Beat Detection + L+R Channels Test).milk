@@ -82,7 +82,7 @@ wavecode_0_g=0.000
 wavecode_0_b=0.000
 wavecode_0_a=1.000
 wave_0_per_point1=x=0.35-(value1*0.40);
-wave_0_per_point2=y=sample+0.22;
+wave_0_per_point2=y=sample;
 wave_0_per_point3=r=below(x,0.25);
 wave_0_per_point4=g=1-below(x,0.1);
 wavecode_1_enabled=1
@@ -99,7 +99,7 @@ wavecode_1_g=0.000
 wavecode_1_b=0.000
 wavecode_1_a=1.000
 wave_1_per_point1=x=0.65+(value2*0.40);
-wave_1_per_point2=y=sample+0.22;
+wave_1_per_point2=y=sample;
 wave_1_per_point3=r=above(x,0.75);
 wave_1_per_point4=g=1-above(x,0.9);
 wavecode_2_enabled=0

@@ -236,7 +236,7 @@ per_pixel_2=dy=sin(sqrt(sqr(y*15)*15))*.01;
 warp_1=`shader_body
 warp_2=`{
 warp_3=`    // sample previous frame
-warp_4=`    ret = tex2D( sampler__main, uv ).xyz;
+warp_4=`    ret = tex2D( sampler_main, uv ).xyz;
 warp_5=`    
 warp_6=`    // darken (decay) over time
 warp_7=`    ret *= 0.99; //or try: ret -= 0.004;
