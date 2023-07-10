@@ -509,6 +509,7 @@ Order of Function Calls
 
 static bool m_bAlwaysOnTop = false;
 int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
+bool TranspaMode = false;
 
 void NSEEL_HOSTSTUB_EnterMutex(){}
 void NSEEL_HOSTSTUB_LeaveMutex(){}
@@ -4158,9 +4159,16 @@ void CPlugin::MyRenderUI(
             SelectFont(DECORATIVE_FONT);
             swprintf(
                 buf,
-                L"%s %s ",
+                L"%s Current preset: %s ",
                 (m_bPresetLockedByUser || m_bPresetLockedByCode) ? L"\xD83D\xDD12" : L"",
                 (m_nLoadingPreset != 0) ? m_pNewState->m_szDesc : m_pState->m_szDesc);
+            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+            SelectFont(SIMPLE_FONT);
+            swprintf(
+                buf,
+                L"%s Previous preset: %s ",
+                (m_bPresetLockedByUser || m_bPresetLockedByCode) ? L"" : L"",
+                (m_nLoadingPreset != 0) ? m_pState->m_szDesc : m_pOldState->m_szDesc);
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -5143,6 +5151,27 @@ void ToggleAlwaysOnTop(HWND hwnd) {
 	}
 }
 
+void ToggleTransparency(HWND hwnd)
+{
+    RECT rect;
+    GetWindowRect(hwnd, &rect);
+    int x = rect.left;
+    int y = rect.top;
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+
+    if (TranspaMode)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, ULW_COLORKEY | LWA_ALPHA);
+    }
+    else
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, LWA_ALPHA);
+    }
+}
+
 //----------------------------------------------------------------------
 
 LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
@@ -5504,6 +5533,20 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				wsprintfW(m_szSongTitle, L"Always On Top OFF"); LaunchSongTitleAnim();
 			}
 			 return 0;
+			 
+		case VK_F12:
+            TranspaMode = !TranspaMode;
+        if (TranspaMode)
+            {
+                ToggleTransparency(hWnd);
+                wsprintfW(m_szSongTitle, L"Transparency Mode ON"); LaunchSongTitleAnim();
+            }
+        else
+            {
+                ToggleTransparency(hWnd);
+                wsprintfW(m_szSongTitle, L"Transparency Mode OFF"); LaunchSongTitleAnim();
+            }
+        return 0;
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
@@ -8813,14 +8856,14 @@ void CPlugin::DoCustomSoundAnalysis()
 	for (i=0; i<3; i++)
 	{
 	int start = MY_FFT_SAMPLES*i/192;
-        int end = MY_FFT_SAMPLES*(i+1)/192;
+        int end = MY_FFT_SAMPLES*(i+1)/186;
 		int j;
 		//bass
 
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 64;
-            end = MY_FFT_SAMPLES * (i + 1) / 64;
+            end = MY_FFT_SAMPLES * (i + 1) / 36;
 		//mid
         }
 
