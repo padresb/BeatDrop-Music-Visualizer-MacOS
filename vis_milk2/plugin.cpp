@@ -8855,7 +8855,7 @@ void CPlugin::DoCustomSoundAnalysis()
 	//Incubo_'s fixed beat detection (pretty perfect, accurate)
 	for (i=0; i<3; i++)
 	{
-	int start = MY_FFT_SAMPLES*i/192;
+	int start = MY_FFT_SAMPLES*i/194;
         int end = MY_FFT_SAMPLES*(i+1)/186;
 		int j;
 		//bass
