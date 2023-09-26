@@ -40,6 +40,7 @@ Before compiling the code:
 # BEFORE YOU RUN BEATDROP
 
 Please download and install [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) first.
+BeatDrop now has a Spout integration! Download Spout: https://spout.zeal.co
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
