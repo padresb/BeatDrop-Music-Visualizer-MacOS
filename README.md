@@ -4,7 +4,7 @@
 
 # BeatDrop Music Visualizer
 
-The improved visualizer is here!
+One visualization standalone, one improvement.
 In this repo will fix the bug, adding new features and more stuff to BeatDrop Music Visualizer.
 - This is a continued development because the original developer, Maxim Volskiy (@mvsoft74) has gone silent.
 
@@ -20,12 +20,12 @@ Features added:
 * Now it can support up to 16 custom shapes and waves!
 * Real-time toggling FPS by pressing F3!
 * New waveforms (from 8 to 15)
+* * Spout Support
 
 Features to be added:
 * Toggle 3D Support
 * AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
 * Getting BeatDrop's Song Title data from Windows Playback
-* Spout Support ([Look DrO's Spout Addition for WACUP](https://github.com/WACUP/vis_milk2/commit/8bc232a670442c79713a15881504bf2813ef8554), [leadedge's Spout Version of BeatDrop](https://github.com/leadedge/BeatDrop))
 * Blending the visualizer with Webcam (Example: [Webcam > Spout > NestDrop on Reddit](https://www.reddit.com/r/NestDrop/comments/rh6zew/webcam_spout_nestdrop/) - F2 Hotkey
 * Double Preset Mode
 * Playback Hotkeys that can be controlled on any media players
