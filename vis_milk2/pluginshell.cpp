@@ -133,7 +133,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 http://www.digiwar.com/scripts/renderpage.php?section=2&subsection=2
             -http://www.experts-exchange.com/Programming/Programming_Platforms/Win_Prog/Q_20096218.html
 */
-
 #include "pluginshell.h"
 #include "utility.h"
 #include "defines.h"
@@ -170,7 +169,33 @@ extern wchar_t* g_szHelp;
 extern int g_szHelp_W;
 
 // resides in vms_desktop.dll/lib:
-void getItemData(int x);
+//void getItemData(int x);
+
+// LJ DEBUG
+static int bdn = 0;
+static BOOL CALLBACK GetWindowNames(HWND h, LPARAM l)
+{
+	char search_window_name[MAX_PATH];
+
+	if (h == NULL) {
+		printf("GetWindowNames - null handle\n");
+		return FALSE;
+	}
+
+	if (IsWindow(h) && IsWindowVisible(h)) {
+		GetWindowTextA(h, search_window_name, MAX_PATH);
+		if (search_window_name[0]) {
+			// printf("GetWindowNames - %s (%x)\n", search_window_name, h);
+			// Does the search window name contain "BeatDrop Music Visualizer" ?
+			if (strstr(search_window_name, "BeatDrop Music Visualizer") != NULL) {
+				// printf("Found beatdrop (%d)\n", bdn);
+				bdn++;
+			}
+		}
+	}
+	return TRUE;
+}
+
 
 
 CPluginShell::CPluginShell()
@@ -239,10 +264,13 @@ int       CPluginShell::GetBitDepth()
 {
 	return m_lpDX->GetBitDepth();
 };
-LPDIRECT3DDEVICE9 CPluginShell::GetDevice()
+
+// SPOUT - DX9EX
+LPDIRECT3DDEVICE9EX CPluginShell::GetDevice()
 {
 	if (m_lpDX) return m_lpDX->m_lpDevice; else return NULL;
 };
+
 D3DCAPS9* CPluginShell::GetCaps()
 {
 	if (m_lpDX) return &(m_lpDX->m_caps);  else return NULL;
@@ -317,6 +345,7 @@ void CPluginShell::CleanUpGDIStuff()
 int CPluginShell::InitVJStuff(RECT* pClientRect)
 {
 	wchar_t title[64];
+
 	// Init VJ mode (second window for text):
 	if (m_vj_mode)
 	{
@@ -329,18 +358,18 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		if (!(m_vjd3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
 		{
 			MessageBoxW(NULL, wasabiApiLangString(IDS_ERROR_CREATING_DIRECT3D_DEVICE_FOR_VJ_MODE),
-					    wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64), MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+				wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64), MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 			return false;
 		}
 
 		// Get ordinal adapter # for the currently-selected Windowed Mode display adapter
 		int ordinal_adapter = D3DADAPTER_DEFAULT;
 		int nAdapters = m_vjd3d9->GetAdapterCount();
-		for (int i=0; i<nAdapters; i++)
+		for (int i = 0; i < nAdapters; i++)
 		{
 			D3DADAPTER_IDENTIFIER9 temp;
 			if ((m_vjd3d9->GetAdapterIdentifier(i, /*D3DENUM_NO_WHQL_LEVEL*/ 0, &temp) == D3D_OK) &&
-			    (memcmp(&temp.DeviceIdentifier, &m_adapter_guid_windowed, sizeof(GUID))==0))
+				(memcmp(&temp.DeviceIdentifier, &m_adapter_guid_windowed, sizeof(GUID)) == 0))
 			{
 				ordinal_adapter = i;
 				break;
@@ -352,8 +381,8 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		if (D3D_OK != m_vjd3d9->GetAdapterDisplayMode(ordinal_adapter, &dm))
 		{
 			MessageBoxW(NULL, wasabiApiLangString(IDS_VJ_MODE_INIT_ERROR),
-					    wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+				wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64),
+				MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 			return false;
 		}
 
@@ -380,21 +409,23 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		}
 		else
 		{
-			SetRect(&rect, 0, 0, 384, 384);
+			// SPOUT - make help screen wider
+			// SetRect(&rect, 0, 0, 384, 384);
+			SetRect(&rect, 0, 0, 720, 720);
 			AdjustWindowRect(&rect, dwStyle, 0); // convert client->wnd
 
-			rect.right  -= rect.left;
-			rect.left   = 0;
+			rect.right -= rect.left;
+			rect.left = 0;
 			rect.bottom -= rect.top;
-			rect.top    = 0;
+			rect.top = 0;
 
-			rect.top    += upper_left_corner.y+32;
-			rect.left   += upper_left_corner.x+32;
-			rect.right  += upper_left_corner.x+32;
-			rect.bottom += upper_left_corner.y+32;
+			rect.top += upper_left_corner.y + 32;
+			rect.left += upper_left_corner.x + 32;
+			rect.right += upper_left_corner.x + 32;
+			rect.bottom += upper_left_corner.y + 32;
 		}
 
-		WNDCLASS wc = {0};
+		WNDCLASS wc = { 0 };
 		wc.lpfnWndProc = VJModeWndProc;				// our window procedure
 		wc.hInstance = GetInstance();	// hInstance of DLL
 		wc.hIcon = LoadIcon(GetInstance(), MAKEINTRESOURCE(IDI_PLUGIN_ICON));
@@ -402,13 +433,13 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS; // CS_DBLCLKS lets the window receive WM_LBUTTONDBLCLK, for toggling fullscreen mode...
 		wc.cbWndExtra = sizeof(DWORD);
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+		wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 
 		if (!RegisterClass(&wc))
 		{
 			MessageBoxW(NULL, wasabiApiLangString(IDS_ERROR_REGISTERING_WINDOW_CLASS_FOR_TEXT_WINDOW),
-					    wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64),
-					    MB_OK|MB_SETFOREGROUND|MB_TOPMOST);
+				wasabiApiLangString(IDS_MILKDROP_ERROR, title, 64),
+				MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 			return false;
 		}
 		m_bTextWindowClassRegistered = true;
@@ -416,11 +447,37 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		//DWORD nThreadID;
 		//CreateThread(NULL, 0, TextWindowThread, &rect, 0, &nThreadID);
 
+		// =====================================
+		// SPOUT
+		// The render window title will have been modified
+		// to show the number of BeatDrop instances.
+		// Copy this number to the VJ text window title
+		// The render window handle is already saved
+		char consoletitle[64];
+		strcpy_s(consoletitle, 64, TEXT_WINDOW_CLASSNAME); // Default is the class name re-used
+		char temp[64];
+		int nc = GetWindowTextA(m_hRenderWnd, temp, 64);
+		// The return value is the number of characters
+		// Default is "BeatDrop Music Visualizer" (25 chars)
+		// (see Milkdrop2PcmVisualzer.cpp)
+		if (nc > 25) {
+			// Get the _01 - _02 etc.. appended for multiple instances
+			std::string str1 = temp;
+			std::string str2 = str1.substr(25);
+			// Append to the text window title
+			strcat_s(consoletitle, 64, str2.c_str());
+		}
+		// =====================================
+
 		// Create the text window
 		m_hTextWnd = CreateWindowEx(
 		               0,
 		               TEXT_WINDOW_CLASSNAME,				// our window class name
-		               TEXT_WINDOW_CLASSNAME,				// use description for a window title
+		               // SPOUT
+					   // ===============
+			           consoletitle,
+		               // TEXT_WINDOW_CLASSNAME,				// use description for a window title
+					   // ===============
 		               dwStyle,
 		               rect.left, rect.top,								// screen position (read from config)
 		               rect.right - rect.left, rect.bottom - rect.top,  // width & height of window (need to adjust client area later)
@@ -439,6 +496,18 @@ int CPluginShell::InitVJStuff(RECT* pClientRect)
 		}
 
 		SetWindowLongPtr(m_hTextWnd, GWLP_USERDATA, (LONG_PTR)this);
+
+		// SPOUT - remove close button
+		//EnableMenuItem(GetSystemMenu(m_hTextWnd, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+
+		// SPOUT
+		// LJ
+		// Hide VJ window if NestImmersion UI is open
+		// For compile option set m_vj_mode = 0 in pluginshell.cpp
+		if (FindWindowA(NULL, "BeatDropUI") != NULL)
+			ShowWindow(m_hTextWnd, SW_HIDE);
+		else if (IsIconic(m_hTextWnd))
+			ShowWindow(m_hTextWnd, SW_RESTORE);
 
 		GetClientRect(m_hTextWnd, &rect);
 		m_nTextWndWidth  = rect.right-rect.left;
@@ -772,7 +841,8 @@ void CPluginShell::StuffParams(DXCONTEXT_PARAMS *pParams)
 	pParams->parent_window = NULL;
 }
 
-int CPluginShell::InitDirectX(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd)
+// SPOUT - DX9EX
+int CPluginShell::InitDirectX(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd)
 {
     if (device) {
         m_lpDX = new DXContext(device, d3dpp, hwnd, m_szConfigIniFile);
@@ -823,13 +893,14 @@ void CPluginShell::CleanUpDirectX()
 
 int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance)
 {
+
 	// PROTECTED CONFIG PANEL SETTINGS (also see 'private' settings, below)
 	m_start_fullscreen      = 0;
 	m_start_desktop         = 0;
 	m_fake_fullscreen_mode  = 0;
-	m_max_fps_fs            = 30;
-	m_max_fps_dm            = 30;
-	m_max_fps_w             = 30;
+	m_max_fps_fs            = 144;
+	m_max_fps_dm            = 144;
+	m_max_fps_w             = 144;
 	m_show_press_f1_msg     = 1;
 	m_allow_page_tearing_w  = 1;
 	m_allow_page_tearing_fs = 0;
@@ -935,7 +1006,7 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	//m_screenmode: set at end (derived setting)
 	m_frame = 0;
 	m_time = 0;
-	m_fps = 30;
+	m_fps = 144;
 	m_hInstance = hWinampInstance;
 	m_lpDX = NULL;
 	m_szPluginsDirPath[0] = 0;  // will be set further down
@@ -1005,7 +1076,8 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	m_align_weights_ready = 0;
 
 	// SEPARATE TEXT WINDOW (FOR VJ MODE)
-	m_vj_mode       = 0;
+	// SPOUT
+	m_vj_mode = 0; // 0;
 	m_hidden_textwnd = 0;
 	m_resizing_textwnd = 0;
 	m_hTextWnd		= NULL;
@@ -1027,13 +1099,15 @@ int CPluginShell::PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance
 	return TRUE;
 }
 
-int CPluginShell::PluginInitialize(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, int iWidth, int iHeight)
+// SPOUT - DX9EX
+int CPluginShell::PluginInitialize(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, int iWidth, int iHeight)
 {
     // note: initialize GDI before DirectX.  Also separate them because
     // when we change windowed<->fullscreen, or lose the device and restore it,
     // we don't want to mess with any (persistent) GDI stuff.
 
     if (!InitDirectX(device, d3dpp, hwnd)) return FALSE;  // gives its own error messages
+
     m_lpDX->m_client_width = iWidth;
     m_lpDX->m_client_height = iHeight;
     m_lpDX->m_REAL_client_height = iHeight;
@@ -1041,6 +1115,9 @@ int CPluginShell::PluginInitialize(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETE
 
     if (!InitNondx9Stuff()) return FALSE;  // gives its own error messages
     if (!AllocateDX9Stuff()) return FALSE;  // gives its own error messages
+	// SPOUT
+	// Save the handle to the render window to use in InitVJStuff
+	m_hRenderWnd = hwnd;
 	if (!InitVJStuff()) return FALSE;
 
     return TRUE;
@@ -1143,9 +1220,10 @@ void CPluginShell::ReadConfig()
 	m_fix_slow_text        = GetPrivateProfileIntW(L"settings",L"fix_slow_text",m_fix_slow_text,m_szConfigIniFile);
 	m_vj_mode              = GetPrivateProfileBoolW(L"settings",L"vj_mode",m_vj_mode,m_szConfigIniFile);
 
+
 	//D3DDISPLAYMODE m_fs_disp_mode
-	m_disp_mode_fs.Width           = GetPrivateProfileIntW(L"settings",L"disp_mode_fs_w", m_disp_mode_fs.Width           ,m_szConfigIniFile);
-	m_disp_mode_fs.Height           = GetPrivateProfileIntW(L"settings",L"disp_mode_fs_h",m_disp_mode_fs.Height          ,m_szConfigIniFile);
+	m_disp_mode_fs.Width       = GetPrivateProfileIntW(L"settings",L"disp_mode_fs_w", m_disp_mode_fs.Width           ,m_szConfigIniFile);
+	m_disp_mode_fs.Height      = GetPrivateProfileIntW(L"settings",L"disp_mode_fs_h",m_disp_mode_fs.Height          ,m_szConfigIniFile);
 	m_disp_mode_fs.RefreshRate = GetPrivateProfileIntW(L"settings",L"disp_mode_fs_r",m_disp_mode_fs.RefreshRate,m_szConfigIniFile);
 	m_disp_mode_fs.Format      = (D3DFORMAT)GetPrivateProfileIntW(L"settings",L"disp_mode_fs_f",m_disp_mode_fs.Format     ,m_szConfigIniFile);
 
@@ -1262,7 +1340,10 @@ int CPluginShell::PluginRender(unsigned char *pWaveL, unsigned char *pWaveR)//, 
 	else
 		m_lost_focus = (GetFocus() != GetPluginWindow());
 
-	if (m_hidden || m_resizing)
+	// SPOUT
+	// Allow render when minimized
+	// if (m_hidden || m_resizing)
+	if (m_resizing)
 	{
 		Sleep(30);
 		return true;
@@ -1398,6 +1479,7 @@ void CPluginShell::DrawAndDisplay(int redraw)
 
 		if (!m_vjd3d9_device)   // in VJ mode, this renders to different context, so do it after BeginScene() on 2nd device.
 			RenderBuiltInTextMsgs();    // to m_lpDDSText?
+		
 		MyRenderUI(&m_upper_left_corner_y, &m_upper_right_corner_y, &m_lower_left_corner_y, &m_lower_right_corner_y, m_left_edge, m_right_edge);
 		RenderPlaylist();
 
@@ -1412,6 +1494,7 @@ void CPluginShell::DrawAndDisplay(int redraw)
 	{
 		if (!m_lpDDSText || m_bClearVJWindow)
 			m_vjd3d9_device->Clear(0, 0, D3DCLEAR_TARGET, 0xFF000000, 1.0f, 0);
+
 		m_bClearVJWindow = false;
 		// note: when using debug DX runtime, textwnd will flash red/green after frame 4, if no text is drawn on a frame!
 
@@ -1442,6 +1525,7 @@ void CPluginShell::DrawAndDisplay(int redraw)
 
 	if (m_vjd3d9_device && !m_hidden_textwnd)
 		m_vjd3d9_device->Present(NULL,NULL,NULL,NULL);
+
 }
 
 void CPluginShell::EnforceMaxFPS()
@@ -1556,7 +1640,7 @@ void CPluginShell::DoTime()
 {
 	if (m_frame==0)
 	{
-		m_fps = 30;
+		m_fps = 144;
 		m_time = 0;
 		m_time_hist_pos = 0;
 	}
@@ -1683,8 +1767,8 @@ void CPluginShell::AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR)
 
 	// sum (left channel) spectrum up into 3 bands
 	// [note: the new ranges do it so that the 3 bands are equally spaced, pitch-wise]
-	float min_freq = 200.0f;
-	float max_freq = 11025.0f;
+	float min_freq = 20.0f;
+	float max_freq = 20000.0f;
 	float net_octaves = (logf(max_freq/min_freq) / logf(2.0f));     // 5.7846348455575205777914165223593
 	float octaves_per_band = net_octaves / 3.0f;                    // 1.9282116151858401925971388407864
 	float mult = powf(2.0f, octaves_per_band); // each band's highest freq. divided by its lowest freq.; 3.805831305510122517035102576162
@@ -1857,7 +1941,6 @@ void CPluginShell::DrawDarkTranslucentBox(RECT* pr)
 void CPluginShell::RenderBuiltInTextMsgs()
 {
 	int _show_press_f1_NOW = (m_show_press_f1_msg && m_time < PRESS_F1_DUR);
-
 	{
 		RECT r;
 
@@ -1866,27 +1949,27 @@ void CPluginShell::RenderBuiltInTextMsgs()
 			int y = m_upper_left_corner_y;
 
 			SetRect(&r, 0, 0, GetWidth(), GetHeight());
-			if(!g_szHelp_W)
+			if (!g_szHelp_W)
 				m_d3dx_font[HELPSCREEN_FONT]->DrawTextA(NULL, (char*)g_szHelp, -1, &r, DT_CALCRECT, 0xFFFFFFFF);
 			else
 				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, DT_CALCRECT, 0xFFFFFFFF);
 
 			r.top += m_upper_left_corner_y;
 			r.left += m_left_edge;
-			r.right += m_left_edge + PLAYLIST_INNER_MARGIN*2;
-			r.bottom += m_upper_left_corner_y + PLAYLIST_INNER_MARGIN*2;
+			r.right += m_left_edge + PLAYLIST_INNER_MARGIN * 2;
+			r.bottom += m_upper_left_corner_y + PLAYLIST_INNER_MARGIN * 2;
 			DrawDarkTranslucentBox(&r);
 
 			r.top += PLAYLIST_INNER_MARGIN;
 			r.left += PLAYLIST_INNER_MARGIN;
 			r.right -= PLAYLIST_INNER_MARGIN;
 			r.bottom -= PLAYLIST_INNER_MARGIN;
-			if(!g_szHelp_W)
+			if (!g_szHelp_W)
 				m_d3dx_font[HELPSCREEN_FONT]->DrawTextA(NULL, (char*)g_szHelp, -1, &r, 0, 0xFFFFFFFF);
 			else
 				m_d3dx_font[HELPSCREEN_FONT]->DrawTextW(NULL, g_szHelp, -1, &r, 0, 0xFFFFFFFF);
 
-			m_upper_left_corner_y += r.bottom-r.top + PLAYLIST_INNER_MARGIN*3;
+			m_upper_left_corner_y += r.bottom - r.top + PLAYLIST_INNER_MARGIN * 3;
 		}
 
 		// render 'Press F1 for Help' message in lower-right corner:
@@ -2076,6 +2159,7 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 	//bool bShiftHeldDown = (GetKeyState(VK_SHIFT) & mask) != 0;
 	bool bCtrlHeldDown  = (GetKeyState(VK_CONTROL) & mask) != 0;
 	//bool bAltHeldDown: most keys come in under WM_SYSKEYDOWN when ALT is depressed.
+	RECT rect;
 
 	switch (uMsg)
 	{
@@ -2117,14 +2201,18 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		break;
 
 	case WM_SIZE:
+
 		// clear or set activity flag to reflect focus
 		if (m_lpDX && m_lpDX->m_ready && !m_resizing)
 		{
 			m_hidden = (SIZE_MAXHIDE==wParam || SIZE_MINIMIZED==wParam) ? TRUE : FALSE;
-
+			// SPOUT DEBUG
+			// Allow restore from minimize without reset of the window
 			if (SIZE_MAXIMIZED==wParam || SIZE_RESTORED==wParam) // the window has been maximized or restored
+			// if (SIZE_MAXIMIZED == wParam ) // the window has been maximized
 				OnUserResizeWindow();
 		}
+
 		break;
 
 	case WM_ENTERSIZEMOVE:
@@ -2132,8 +2220,14 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		break;
 
 	case WM_EXITSIZEMOVE:
-		if (m_lpDX && m_lpDX->m_ready)
-			OnUserResizeWindow();
+		// SPOUT
+		// Find out whether the window has been resized or just moved
+		GetClientRect(hWnd, &rect);
+		if ((rect.right - rect.left) != 1280
+			|| (rect.bottom - rect.top) != 720) {
+			if (m_lpDX && m_lpDX->m_ready)
+				OnUserResizeWindow();
+		}
 		m_resizing = 0;
 		break;
 
@@ -2160,9 +2254,9 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		break;
 
 	case WM_COMMAND: {
-		    // then allow the plugin to override any command:
-		    if (MyWindowProc(hWnd, uMsg, wParam, lParam) == 0)
-			    return 0;
+	    // then allow the plugin to override any command:
+	    if (MyWindowProc(hWnd, uMsg, wParam, lParam) == 0)
+		    return 0;
 		}
 		break;
 
@@ -2226,6 +2320,16 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		break;
 
 	case WM_KEYDOWN:
+
+		// SPOUT DEBUG : BeatDrop help changed from F12
+		// Special case to pass the key code on to plugin
+		// so that the ui mode is set back to regular
+		// and any existing mode is cancelled and text is cleared
+		if (wParam == VK_F1) {
+			MyWindowProc(hWnd, uMsg, wParam, lParam);
+			return 0;
+		}
+
 		if (m_show_playlist)
 		{
 			switch (wParam)
@@ -2278,15 +2382,23 @@ LRESULT CPluginShell::PluginShellWindowProc(HWND hWnd, unsigned uMsg, WPARAM wPa
 		}
 
 		// allow the plugin to override any keys:
+		// Note from plugin.cpp
+		// handle non - character keys(virtual keys) and return 0.
+		//         if we don't handle them, return 1, and the shell will
+		//         (passing some to the shell's key bindings, some to Winamp,
+		//          and some to DefWindowProc)
 		if (MyWindowProc(hWnd, uMsg, wParam, lParam) == 0)
 			return 0;
 
 		switch (wParam)
 		{
-		    case VK_F1:  //Changed the help screen shortcut from F12 to F1
-			    m_show_press_f1_msg = 0;
-			    ToggleHelp();
-			    return 0;
+			// SPOUT : hide/show render window
+			case VK_F12:
+				if(IsWindowVisible(GetPluginWindow()))
+					ShowWindow(GetPluginWindow(), SW_HIDE);
+				else
+					ShowWindow(GetPluginWindow(), SW_SHOW);
+				return 0;
 
 		    case VK_ESCAPE:
 			    if (m_show_help)

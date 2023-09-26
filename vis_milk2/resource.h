@@ -675,9 +675,6 @@
 #define IDC_DECORATIVE_FONT             1044
 #define IDC_TITLE_FONT                  1045
 #define IDC_FONT1b                      1093
-#define IDS_PF_BASS                  	1094
-#define IDS_PF_MID                  	1095
-#define IDS_PF_TREB                  	1096
 
 // Next default values for new objects
 // 

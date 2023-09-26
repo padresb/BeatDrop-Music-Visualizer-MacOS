@@ -47,7 +47,10 @@ typedef struct
     int  allow_page_tearing;
     GUID adapter_guid;
     char adapter_devicename[256];
-    D3DDISPLAYMODE display_mode;    // ONLY VALID FOR FULLSCREEN MODE.
+
+	// SPOUT - DX9EX
+	D3DDISPLAYMODEEX display_mode;    // ONLY VALID FOR FULLSCREEN MODE.
+
     D3DMULTISAMPLE_TYPE multisamp;
     HWND parent_window;
     int m_dualhead_horz; // 0 = span both, 1 = left only, 2 = right only
@@ -62,7 +65,10 @@ class DXContext
 {
 public:
     // PUBLIC FUNCTIONS
-    DXContext(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, wchar_t* szIniFile);
+	
+	// SPOUT - DX9EX
+	DXContext(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, wchar_t* szIniFile);
+
     ~DXContext();
     BOOL StartOrRestartDevice(DXCONTEXT_PARAMS *pParams); // also serves as Init() function
     void OnTrulyExiting() { m_truly_exiting = 1; }
@@ -94,9 +100,12 @@ public:
     RECT m_monitor_work_rect;   // same, but excludes the taskbar area.
     RECT m_monitor_work_rect_orig; // original work rect; does not account for pseudo-multimon modes like 2048x768
     DXCONTEXT_PARAMS       m_current_mode;
-    LPDIRECT3DDEVICE9      m_lpDevice;
+
+	// SPOUT - DX9EX
+	LPDIRECT3DDEVICE9EX      m_lpDevice;
+	LPDIRECT3D9EX            m_lpD3D;
+
     D3DPRESENT_PARAMETERS* m_d3dpp;
-    LPDIRECT3D9            m_lpD3D;
     D3DCAPS9               m_caps;
 
 protected:

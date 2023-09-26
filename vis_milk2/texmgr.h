@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TEXMGR_ERROR_MASK                 0x0F
 #define TEXMGR_ERR_SUCCESS                0
 #define TEXMGR_ERR_BAD_INDEX              1
+
 /*
 #define TEXMGR_ERR_OPENING                2
 #define TEXMGR_ERR_IMAGE_NOT_24_BIT       3
@@ -50,6 +51,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TEXMGR_ERR_LOCKSURFACE_FAILED     6
 #define TEXMGR_ERR_CORRUPT_JPEG           7
 */
+
 #define TEXMGR_ERR_FORMAT                 8
 #define TEXMGR_ERR_BADFILE                9
 #define TEXMGR_ERR_OUTOFMEM               10

@@ -32,7 +32,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "shell_defines.h"
 #include <strsafe.h>
 
-DXContext::DXContext(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, wchar_t* szIniFile)
+// SPOUT - DX9EX
+DXContext::DXContext(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, wchar_t* szIniFile)
 {
     m_szWindowCaption[0] = 0;
     m_hwnd = hwnd;

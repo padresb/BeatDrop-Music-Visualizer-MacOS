@@ -27,6 +27,13 @@ IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISI
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+//
+// SPOUT
+// 
+//	15.05.23 - Change from SpoutLibrary to SpoutDX support class
+//
+
+
 #include "plugin.h"
 #include "resource.h"
 #include "support.h"
@@ -754,7 +761,7 @@ void CPlugin::RenderFrame(int bRedraw)
 
     float fDeltaT = 1.0f/GetFps();
 
-    if (bRedraw)
+	if (bRedraw)
     {
 	    // pre-un-flip buffers, so we are redoing the same work as we did last frame...
 	    IDirect3DTexture9* pTemp = m_lpVS[0];
@@ -1151,7 +1158,100 @@ void CPlugin::RenderFrame(int bRedraw)
     }
     fOldTime = fNewTime;
     */
-}
+
+
+	// =========================================================
+	//
+	// SPOUT output
+	//
+	// SpoutDX SendDX9surface
+	//
+	// Achieves :
+	//		60 fps at 1920x1080
+	//		60 fps at 3840x2160
+	//		60 fps at 2048x2048
+	//		44 fps at 4096x4096
+	// All resolutions > 30fps
+	//
+	// NOTE - fps is capped at 30 default and can be confirmed with F4 in the VJ control window
+	// It is normally adjusted by the Winamp config panel which is not available for BeatDrop
+	// However, default fps variables can be changed in : plugin.cpp - CPlugin::OverrideDefaults()
+	// and, if Winamp is installed, the Milkdrop generated configuration file can be copied using "F8"
+	//
+	// The device must be D3D9ex and not D3D9.
+	// See : Milkdrop2PcmVisualizer.cpp - void InitD3d(HWND hwnd, int width, int height)
+	// Changes throughout. Search for "DX9EX".
+	// Credit : Pat Pom NEST Immersion.
+	//
+	if (bSpoutOut) { // Spout is selected in Visualisation -> Configure plugin -> "More Settings"
+
+		// Grab the backbuffer from the Direct3D device
+		LPDIRECT3DSURFACE9 back_buffer = NULL;
+		HRESULT hr = GetDevice()->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &back_buffer);
+		// HRESULT hr = GetDevice()->GetRenderTarget(0, &back_buffer); // Faster ?
+		if (SUCCEEDED(hr)) {
+			// Create a sender at the size of the backbuffer
+			D3DSURFACE_DESC desc;
+			back_buffer->GetDesc(&desc);
+			if (!bInitialized) {
+			//	// Check if different to the current window size
+			//	// to avoid resolution change on move or resize
+			//	HWND hw = FindWindowA("Direct3DWindowClass", "BeatDrop Music Visualizer");
+			//	RECT rc;
+			//	GetClientRect(hw, &rc);
+			//	if (desc.Width != (rc.right - rc.left) && desc.Height != (rc.bottom - rc.top)) {
+			//		// Check backbuffer size against sender initialized size
+			//		if (g_Width != desc.Width || g_Height != desc.Height) {
+			//			SpoutLogNotice("CPlugin::RenderFrame - size change from %dx%d to %dx%d", g_Width, g_Height, desc.Width, desc.Height);
+			//			g_Width = desc.Width;
+			//			g_Height = desc.Height;
+			//			// DX9 device will have been re-created so create the sender again
+			//			bInitialized = OpenSender(g_Width, g_Height);
+			//			back_buffer->Release();
+			//			return;
+			//		}
+			//	}
+			//}
+
+
+			// DX9 device will have been re-created so create the sender
+				bInitialized = OpenSender(desc.Width, desc.Height);
+				back_buffer->Release();
+				return;
+			} // endif not initialized
+
+			// Test for failure
+
+			if (!bInitialized) {
+				back_buffer->Release();
+				return; // safety in case something went wrong
+			}
+
+			// Send the backbuffer surface
+			// Size changes are handled by the function
+			//
+			// - If the update flag is true (default), size changes are handled by SendDX9surface.
+			//   Set the initial sender size to the window size in Milkdrop2PcmVisualizer.cpp
+			//
+			// - If the update flag is false, the sender is created but not updated.
+			//   This allows a fixed sender size because DirectX 9 uses "StretchRect"
+			//   to copy the surface to the sender shared texture.
+			//   Set the sender resolution in Milkdrop2PcmVisualizer.cpp (SpoutWidth/SpoutHeight)
+			//
+			// spoutsender.SendDX9surface(back_buffer, true); // Variable size
+			spoutsender.SendDX9surface(back_buffer, false); // Fixed size
+
+			back_buffer->Release();
+		}
+
+		// For print output
+		// Activate a console in plugin.cpp with OpenSpoutConsole()
+		// printf("Render fps = %d\n", (int)GetFps());
+
+	} // end Spout output
+	// ======================================================================
+
+} // end RenderFrame
 
 void CPlugin::DrawMotionVectors()
 {
@@ -4164,7 +4264,7 @@ void CPlugin::DrawUserSprites()	// from system memory, to back buffer.
 
 			bool bKillSprite = (*m_texmgr.m_tex[iSlot].var_done != 0.0);
 			bool bBurnIn = (*m_texmgr.m_tex[iSlot].var_burn != 0.0);
-
+			
             // Remember the original backbuffer and zbuffer
             LPDIRECT3DSURFACE9 pBackBuffer=NULL;//, pZBuffer=NULL;
             lpDevice->GetRenderTarget( 0, &pBackBuffer );
@@ -4312,6 +4412,10 @@ void CPlugin::DrawUserSprites()	// from system memory, to back buffer.
 			// 2   additive   r,g,b=modulate     a=modulate    D3DBLEND_ONE      D3DBLEND_ONE
 			// 3   srccolor   r,g,b=no effect    a=no effect   SRCCOLOR          INVSRCCOLOR
 			// 4   colorkey   r,g,b=modulate     a=no effect
+			// a = 0.5; // for testing
+			// printf("blendmode = %d : opacity = %f\n", blendmode, a);
+
+			// blendmode = 3; // for testing
 			switch(blendmode)
 			{
 			case 0:

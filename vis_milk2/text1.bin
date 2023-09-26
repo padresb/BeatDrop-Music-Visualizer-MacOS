@@ -1,8 +1,9 @@
  GENERAL:
 
    ESC             exit help / menus
-   ALT + ENTER       toggle fullscreen
-   ALT + SHIFT       toggle multiple monitor stretch
+   ALT + ENTER     toggle fullscreen (or double-click)
+   ALT + S         toggle multiple monitor stretch
+   CTRL + Z        enable/disable spout output
 
  PRESETS:
 
@@ -15,20 +16,22 @@
    S               save new preset
    A               do random mini-mash-up
    D               toggle warp & comp shader locks
+   !               randomize warp shader
+   @               randomize comp shader
 
  INFO:
 
-   F1   help
-   F4   show preset info
-   F5   show fps
-   F6   show rating
+   F1              help
+   F4              show preset info
+   F5              show fps
+   F6              show rating
    
  HOTKEYS:
 
-   F3   toggle fps to 30/60/90/120/144/240/360/Unlimited
-   F7   always on top
-   F10  freeze/unfreeze screen (only peek at the window)
-   F12  transparency mode
-   N    show per-frame monitor
-   K    enter sprite mode
-   Y    enter custom message mode
+   F3              toggle fps to 30/60/90/120/144/240/360/Unlimited
+   F7              always on top
+   F10             freeze/unfreeze screen (only on windowed)
+   F12             transparency mode (removes the black background)
+   N               show per-frame monitor
+   K               enter sprite mode
+   Y               enter custom message mode

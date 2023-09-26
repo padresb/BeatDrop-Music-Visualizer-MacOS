@@ -1,5 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
+#include <windows.h>
+#include <commctrl.h>
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -7,7 +9,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "WinResrc.h"
+// #include "WinResrc.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -59,7 +61,10 @@ IDI_PLUGIN_ICON         ICON                    "plugin_icon.ico"
 //
 // TEXT
 //
-
+// 
+// SPOUT : text1.bin edited to add more informmation
+// See http://www.geisswerks.com/hosted/milkdrop2/milkdrop.html
+//
 IDR_TEXT1               TEXT                    "text1.bin"
 
 
@@ -69,8 +74,8 @@ IDR_TEXT1               TEXT                    "text1.bin"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2,4,0
- PRODUCTVERSION 1,2,4,0
+ FILEVERSION 1,2,5,0
+ PRODUCTVERSION 1,2,5,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -87,12 +92,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Maxim Volskiy & Incubo_"
             VALUE "FileDescription", "BeatDrop Music Visualizer - The Milkdrop2 Music Visualizer Standalone"
-            VALUE "FileVersion", "1.2.4"
+            VALUE "FileVersion", "1.2.5"
             VALUE "InternalName", "BeatDrop"
-            VALUE "LegalCopyright", "Copyright Â© BeatDrop development team"
+            VALUE "LegalCopyright", "Copyright © BeatDrop development team"
             VALUE "OriginalFilename", "BeatDrop.exe"
             VALUE "ProductName", "BeatDrop"
-            VALUE "ProductVersion", "1.2.4"
+            VALUE "ProductVersion", "1.2.5"
         END
     END
     BLOCK "VarFileInfo"
@@ -255,9 +260,6 @@ BEGIN
                             "Please exit the visualizer before running the config panel."
     IDS_FPS                 "fps"
     IDS_PF_MONITOR          "pf monitor"
-	IDS_PF_BASS             "bass"
-    IDS_PF_MID              "mid"
-    IDS_PF_TREB             "treb"
     IDS_PRESS_F9_TO_HIDE_SHADER_QREF 
                             "-- press F9 to hide shader Quick Reference --\n"
     IDS_PRESS_F9_TO_SHOW_SHADER_QREF 
@@ -853,7 +855,7 @@ BEGIN
     IDS_CONFIG_PANEL_BUTTON_8 " "
     IDS_EXTRA_FONT_1_NAME   "Tooltips"
     IDS_EXTRA_FONT_2_NAME   "Animated Songtitles"
-    IDS_PRESS_F1_MSG        "Press F1 for Help "
+	IDS_PRESS_F1_MSG        "Press F1 for Help "
     IDS_GRAPHICS_SUBSYSTEM_IS_TEMPORARILY_UNSTABLE 
                             "One or more fullscreen display adapters are behaving strangely and will not\nreport a list of display modes.  It's quite possible that your graphics subsystem\nis temporarily unstable.\n\nSUGGESTED ACTION: If you have modified your multimon setup or Windows,\ndisplay settings, or have updated any display drivers or installed\nany new programs, you should probably REBOOT YOUR COMPUTER before\ntrying to configure (or run) the plug-in again."
 END
@@ -1032,10 +1034,10 @@ BEGIN
     IDS_TO_FREE_UP_SOME_MEMORY_RESTART_WINAMP_THEN_GO_TO_CONFIG_3 
                             "To free up some memory, please RESTART WINAMP, then return\n   to the plug-in's config panel and try setting your\n   FULLSCREEN MODE MULTISAMPLING back to 'NONE.'\n\nThen try running the plug-in again."
     IDS_TO_FREE_UP_VIDEO_MEMORY 
-                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try returning to the config panel (ALT+K) and selecting a display mode\n    that uses less video memory.  16-bit display modes use half as much memory\n    as 32-bit display modes, and lower-resolution display modes (such as 640 x 480)\n    use proportionally less video memory.\n\nAfter making these changes, please RESTART WINAMP before trying to run\nthe plug-in again."
+                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try returning to the config panel (ALT+K) and selecting a display mode\n    that uses less video memory.  16-bit display modes use half as much memory\n    as 32-bit display modes, and lower-resolution display modes (such as 640 x 480)\n    use proportionally less video memory.\n\nAfter making these changes, please RESTART BEATDROP."
     IDS_TO_FREE_UP_VIDEO_MEMORY_2 
-                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try changing your Windows display mode to a lesser bit depth\n    (i.e. 16-bit color), or a smaller resolution.\n\nAfter making these changes, please RESTART WINAMP before trying to run\nthe plug-in again."
-    IDS_MILKDROP_SUGGESTION "MILKDROP SUGGESTION"
+                            "To free up some video memory, try the following:\n\n1. Try closing all other applications that might be using video memory, especially:\n\n        * WINDOWS MEDIA PLAYER\n        * any video conferencing software, such as NETMEETING\n        * any DVD playback, TV tuner, or TV capture software\n        * any video editing software\n        * any software that uses Overlays, such as Drempels Desktop\n        * any audio dictation software, such as Dragon NaturallySpeaking\n        * any other 3D programs currently running\n\n2. Also try changing your Windows display mode to a lesser bit depth\n    (i.e. 16-bit color), or a smaller resolution.\n\nAfter making these changes, please RESTART BEATDROP."
+    IDS_MILKDROP_SUGGESTION "BEATDROP SUGGESTION"
     IDS_DIRECTX_MISSING_OR_CORRUPT "DirectX Missing or Corrupt"
     IDS_ERROR_THE_PLUGIN_IS_ALREADY_RUNNING 
                             "Error: the plug-in is already running."

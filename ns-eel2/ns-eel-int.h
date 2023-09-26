@@ -103,7 +103,7 @@ typedef struct _compileContext
 }
 compileContext;
 
-#define NSEEL_VARS_PER_BLOCK 64
+#define NSEEL_VARS_PER_BLOCK 750
 
 typedef struct {
       const char *name;

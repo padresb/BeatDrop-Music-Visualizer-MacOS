@@ -37,6 +37,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "textmgr.h"
 #include <vector>
 
+// SPOUT
+#include <string> // For std::string
+#include "io.h" // for _access
+
 #define TIME_HIST_SLOTS 128     // # of slots used if fps > 60.  half this many if fps==30.
 #define MAX_SONGS_PER_PAGE 40
 
@@ -72,6 +76,7 @@ public:
     wchar_t*  GetPluginsDirPath(); // usually returns 'c:\\program files\\winamp\\plugins\\'
     wchar_t*  GetConfigIniFile();  // usually returns 'c:\\program files\\winamp\\plugins\\something.ini' - filename is determined from identifiers in 'defines.h'
 	char*     GetConfigIniFileA();
+
 protected:
 
     // GET METHODS THAT ONLY WORK ONCE DIRECTX IS READY
@@ -84,7 +89,7 @@ protected:
     int          GetWidth();             // returns width of plugin window interior, in pixels.  Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
     int          GetHeight();            // returns height of plugin window interior, in pixels. Note: in windowed mode, this is a fudged, larger, aligned value, and on final display, it gets cropped.
     int          GetBitDepth();          // returns 8, 16, 24 (rare), or 32
-    LPDIRECT3DDEVICE9  GetDevice();      // returns a pointer to the DirectX 8 Device.  NOT persistent; can change!
+	LPDIRECT3DDEVICE9EX  GetDevice();    // returns a pointer to the DirectX 8 Device.  NOT persistent; can change!
     D3DCAPS9*    GetCaps();              // returns a pointer to the D3DCAPS9 structer for the device.  NOT persistent; can change.
     D3DFORMAT    GetBackBufFormat();     // returns the pixelformat of the back buffer (probably D3DFMT_R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, D3DFMT_A4R4G4B4, D3DFMT_R3G3B2, D3DFMT_A8R3G3B2, D3DFMT_X4R4G4B4, or D3DFMT_UNKNOWN)
     D3DFORMAT    GetBackBufZFormat();    // returns the pixelformat of the back buffer's Z buffer (probably D3DFMT_D16_LOCKABLE, D3DFMT_D32, D3DFMT_D15S1, D3DFMT_D24S8, D3DFMT_D16, D3DFMT_D24X8, D3DFMT_D24X4S4, or D3DFMT_UNKNOWN)
@@ -128,8 +133,10 @@ protected:
     int          m_skin;                    // 0 or 1
     int          m_fix_slow_text;           // 0 or 1
     td_fontinfo  m_fontinfo[NUM_BASIC_FONTS + NUM_EXTRA_FONTS];
-    D3DDISPLAYMODE m_disp_mode_fs;          // a D3DDISPLAYMODE struct that specifies the width, height, refresh rate, and color format to use when the plugin goes fullscreen.
-
+	
+	// SPOUT - DX9EX
+	D3DDISPLAYMODEEX m_disp_mode_fs;          // a D3DDISPLAYMODE struct that specifies the width, height, refresh rate, and color format to use when the plugin goes fullscreen.
+    
     // PURE VIRTUAL FUNCTIONS (...must be implemented by derived classes)
     // ------------------------------------------------------------
     virtual void OverrideDefaults()      = 0;
@@ -222,8 +229,11 @@ public:
 
     // called by vis.cpp, on behalf of Winamp:
     int  PluginPreInitialize(HWND hWinampWnd, HINSTANCE hWinampInstance);
-    int  PluginInitialize(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, int iWidth, int iHeight);
-    int  PluginRender(unsigned char *pWaveL, unsigned char *pWaveR);
+    
+	// SPOUT - DX9EX
+	int PluginInitialize(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd, int iWidth, int iHeight);
+    
+	int  PluginRender(unsigned char *pWaveL, unsigned char *pWaveR);
     void PluginQuit();
 
     void ToggleHelp();
@@ -248,7 +258,10 @@ private:
     void DoTime();
     void AnalyzeNewSound(unsigned char *pWaveL, unsigned char *pWaveR);
     void AlignWaves();
-    int  InitDirectX(LPDIRECT3DDEVICE9 device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd);
+	
+	// SPOUT - DX9EX
+	int  InitDirectX(LPDIRECT3DDEVICE9EX device, D3DPRESENT_PARAMETERS* d3dpp, HWND hwnd);
+    
     void CleanUpDirectX();
     int  InitGDIStuff();
     void CleanUpGDIStuff();
@@ -280,7 +293,9 @@ protected:
       int       m_hidden_textwnd;
       int       m_resizing_textwnd;
       protected:
-	   HWND		m_hTextWnd;
+	  HWND		m_hTextWnd;
+	  // SPOUT
+	  HWND		m_hRenderWnd;
       private:
 	  int		m_nTextWndWidth;
 	  int		m_nTextWndHeight;

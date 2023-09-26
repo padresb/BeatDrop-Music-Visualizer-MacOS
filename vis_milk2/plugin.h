@@ -30,6 +30,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __NULLSOFT_DX9_EXAMPLE_PLUGIN_H__
 #define __NULLSOFT_DX9_EXAMPLE_PLUGIN_H__ 1
 
+// =========================================================
+// SPOUT
+#include "..\spoutDX9\SpoutDX9.h" // SpoutDX9 support class
+#include <io.h> // for file existence check
+// =========================================================
+
 #include "pluginshell.h"
 #include "md_defines.h"
 #include "menu.h"
@@ -38,7 +44,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "state.h"
 #include <vector>
 #include "../ns-eel2/ns-eel.h"
-#include <string>
 
 //#include <core/sdk/IPlaybackService.h>
 
@@ -60,7 +65,7 @@ typedef struct
 	float	long_avg[3];	// bass, mids, treble (absolute)
     float   fWave[2][576];
     float   fSpecLeft[MY_FFT_SAMPLES];
-    float   fSpecRight[MY_FFT_SAMPLES];
+	float   fSpecRight[MY_FFT_SAMPLES];
 } td_mysounddata;
 
 typedef struct
@@ -275,7 +280,23 @@ public:
 
     //====[ 1. members added to create this specific example plugin: ]================================================
 
-        /// CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
+	// =========================================================
+	// SPOUT variables
+    spoutDX9 spoutsender;	// A spout DX9 sender object
+	char WinampSenderName[256]; // The sender name
+	bool bInitialized; // did it work ?
+	bool OpenSender(unsigned int width, unsigned int height);
+	bool bSpoutChanged; // set to write config on exit
+	bool bSpoutOut; // Spout output on or off
+	unsigned int g_Width;
+	unsigned int g_Height;
+	HWND g_hwnd;
+	HDC g_hdc;
+	wchar_t	m_szSavedSongTitle[512]; // for saving song tile with Spout on or off
+	// =========================================================
+
+	
+	/// CONFIG PANEL SETTINGS THAT WE'VE ADDED (TAB #2)
         bool		m_bFirstRun;
         float		m_fBlendTimeAuto;		// blend time when preset auto-switches
         float		m_fBlendTimeUser;		// blend time when user loads a new preset

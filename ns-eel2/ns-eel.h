@@ -29,9 +29,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 #ifdef _MSC_VER
 #define strcasecmp stricmp
 #define strncasecmp _strnicmp
+#endif
+
+#ifdef _MSC_VER
+#define NSEEL_CGEN_CALL __cdecl
+#else
+#define NSEEL_CGEN_CALL 
 #endif
 
 #ifndef EEL_F_SIZE
@@ -123,20 +130,28 @@ extern int NSEEL_RAM_memused_errors;
 
 // configuration:
 
+//#define NSEEL_EEL1_COMPAT_MODE // supports old behaviors (continue after failed compile), old functions _bnot etc. disables string support (strings were used as comments in eel1 etc)
+
 #define NSEEL_MAX_VARIABLE_NAMELEN 16
 // define this to override the max variable length (default is 16 bytes)
+
+#define NSEEL_MAX_VARIABLE_NAMELEN 128  // define this to override the max variable length
+#define NSEEL_MAX_EELFUNC_PARAMETERS 40
+#define NSEEL_MAX_FUNCSIG_NAME 2048 // longer than variable maxlen, due to multiple namespaces
 
 //#define NSEEL_MAX_TEMPSPACE_ENTRIES 2048
 // define this to override the maximum working space in 8 byte units.
 // 2048 is the default, and is way more than enough for most applications
 // but in theory you might be able to come up with an expression big enough? maybe?
 
+// maximum loop length (0 for unlimited)
 
-// maximum loop length
 #define NSEEL_LOOPFUNC_SUPPORT_MAXLEN 1048576 // scary, we can do a million entries. probably will never want to, though.
 #define NSEEL_LOOPFUNC_SUPPORT_MAXLEN_STR "1048576"
 
+//#define EEL_DUMP_OPS // used for testing frontend parser/logic changes
 
+#define NSEEL_MAX_FUNCTION_SIZE_FOR_INLINE 2048
 
 // when a VM ctx doesn't have a GRAM context set, make the global one this big
 #define NSEEL_SHARED_GRAM_SIZE (1<<20)
@@ -144,8 +159,14 @@ extern int NSEEL_RAM_memused_errors;
 // 128*65536 = ~8million entries. (64MB RAM used)
 #define NSEEL_RAM_BLOCKS 128
 #define NSEEL_RAM_ITEMSPERBLOCK 65536
+#define NSEEL_STACK_SIZE 4096 // about 64k overhead if the stack functions are used in a given code handle
 
+// arch neutral mode, runs about 1/8th speed or so
+#define EEL_TARGET_PORTABLE
 
+#ifdef NSEEL_EEL1_COMPAT_MODE
+double *NSEEL_getglobalregs();
+#endif
 
 
 #ifdef __cplusplus

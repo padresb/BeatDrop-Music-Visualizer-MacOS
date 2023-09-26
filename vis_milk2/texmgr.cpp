@@ -255,6 +255,36 @@ bool texmgr::RecompileExpressions(int iSlot)
 	char buf[sizeof(m_tex[iSlot].m_szExpr)];
 	StripLinefeedCharsAndComments(expr, buf);
 
+	// LJ DEBUG
+	// ====================================
+	// This was missing in BeatDrop
+	if (buf[0])
+	{
+#ifndef _NO_EXPR_
+		//resetVars(m_tex[iSlot].m_vars);
+		//g_dumpmsg("texmgr: compiling string: ");
+		//g_dumpmsg(buf);
+		if (!(m_tex[iSlot].m_codehandle = NSEEL_code_compile(m_tex[iSlot].tex_eel_ctx, buf)))
+		{
+			//g_dumpmsg(" -error!");
+			//MessageBox( NULL, "error in per-frame code", "MILKDROP ERROR", MB_OK|MB_SETFOREGROUND|MB_TOPMOST );
+			//sprintf(pg->m_szUserMessage, "warning: preset \"%s\": error in 'per_frame' code", m_szDesc);
+			//pg->m_fShowUserMessageUntilThisTime = pg->m_fAnimTime + 6.0f;
+		}
+		else
+		{
+			//g_dumpmsg(" -ok!");
+			//pg->m_fShowUserMessageUntilThisTime = pg->m_fAnimTime;	// clear any old error msg.
+		}
+		//resetVars(NULL);
+
+		return (m_tex[iSlot].m_codehandle != 0);
+
+#endif
+	}
+	// ====================================
+
+
 	return true;
 }
 

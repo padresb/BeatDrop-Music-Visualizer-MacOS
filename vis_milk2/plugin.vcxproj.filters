@@ -20,6 +20,9 @@
     <Filter Include="library\ns-eel">
       <UniqueIdentifier>{ad60581f-f132-4b9d-86c6-2c543b5c59da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="spoutDX9">
+      <UniqueIdentifier>{f96a24de-a941-4632-b3b9-924e81a488d3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\ns-eel2\nseel-caltab.c">
@@ -97,6 +100,24 @@
     <ClCompile Include="..\audio\audiobuf.cpp">
       <Filter>musikcube</Filter>
     </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutCopy.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutDX9.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutFrameCount.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutSenderNames.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutSharedMemory.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\spoutDX9\SpoutUtils.cpp">
+      <Filter>spoutDX9</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="plugin_icon.ico">
@@ -161,6 +182,27 @@
     <ClInclude Include="..\audio\loopback-capture.h" />
     <ClInclude Include="..\audio\prefs.h" />
     <ClInclude Include="..\audio\audiobuf.h" />
+    <ClInclude Include="..\spoutDX9\SpoutCommon.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutCopy.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutDX9.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutFrameCount.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutSenderNames.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutSharedMemory.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spoutDX9\SpoutUtils.h">
+      <Filter>spoutDX9</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="text1.bin">

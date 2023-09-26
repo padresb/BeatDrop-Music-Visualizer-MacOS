@@ -489,6 +489,126 @@ Order of Function Calls
 
 
 
+========================================================================================================
+SPOUT :
+
+	Credit to psilocin@openmailbox.org for the original idea to convert MilkDrop for Spout output
+
+	22.10.14 - changed from Ctrl-Z on and off to default Spout output when the plugin starts
+			   and Ctrl-Z to disable and enable while it is running. Otherwise Spout has to be re-enabled
+			   every time another track is selected.
+	30.10.14 - changed from Glut to pixelformat and OpenGL context creation
+	31.10.14 - changed initialization section to renderframe to ensure correct frame size
+			 - added Ctrl-D user selection of DirectX mode
+			 - flag bUseDX11 to select either DirectX 9 or DirectX 11
+			 - saved DX mode flag in configuration file
+	05.11.14 - Included Spout options in the Visualization configuration control panel
+				Options -> Visualizatiosn -> Configure Plugin
+				MORE SETTINGS tab
+					Enable Spout output
+					Enable Spout DirectX 11 mode
+				Settings are saved with OK
+			 - retained Ctrl-Z for spout on / off while the Visualizer is running
+			 - included Ctrl-D to change from DirectX 9 to DirectX 11
+			   (this might be removed in a future release if it gives trouble)
+			   The selected settings are saved when the Visualizer is stopped.
+	25.04.15 - Changed Spout SDK from graphics auto detection to set DirectX mode to optional installer
+			 - Recompile for dual DX option installer
+	17.06.15 - User observation that custom messages do not work.
+			   This is isolated to "RenderStringToTitleTexture" and seems to be related to
+			   generating the fonts from GDI to DX9. Not sure of the reason. Could be DX9 libraries.
+			   As a a workaround, custom message rendering is replaced with the same as used for
+			   title animation which works OK. The limitation is that this gives a fixed font,
+			   but the colour should come out the same as in the custom message setup file.
+	07.07.15 - Recompile for 2.004 release
+	15.09.15 - Recompile for 2.005 release - revised memoryshare SDK
+	08.11.15 - removed directX9/directX11 option for 2.005
+			 - OpenSender and milkdropfs.cpp - removed XRGB format option and always send as ARGB
+	12.11.18 - Removed DX11 (bUseDX11) option from plugin - test for user DX9 selection instead
+	02.12.18 - Rebuild VS2017 /MT with VS2010 100 toolset - Spout 2.007
+			   (VS2017 140 toolset does not work)
+
+
+	03.12.18 - Started modifications to the BeatDrop project (not back-compatible)
+			   BeatDrop name, versioning and authoring by Maxim Volskiy retained
+			   Use the VJ console for help and text output.
+			   Output resolution is 1920x1080 at start
+			   Resolution can subsequently be changed by resizing the render window
+			   The render window can be hidden with the F12 key
+			   and the VJ console can be minimized when not being used
+			   without affecting Spout output.
+	04.12.18 - Monitor dpi awareness for scaled displays
+			   Reset help or menu text when activating either of them
+			   Disable minimize and maximize
+			   Use SpoutLibrary instead of Spout SDK source files
+			   Cleanup
+			   Rebuild VS2017 /MT with Visual Studio 2017 toolset (v141)
+    05.12.18 : Create GitHub fork and update. Publish release 1001.
+               Bring up the VJ console for F1 help if it has been minimised
+			   PluginShell.cpp - remove maximize from VJ window
+	21.12.18 : Update SpoutLibrary - Version 2.007
+	03.01.19 : Rebuild SpoutLibrary
+			   Rebuild VS2017 /MT with Visual Studio 2017 toolset (v141)
+	16.01.19   TODO : Bug when resizing - re-creates the sender with a new name.
+	29.04.19   Noted : setting  Monitor dpi awareness uusing Manifest tool compiler option
+			   results in blurry text for the console window. Retained SetProcessDpiAwareness
+			   Noted : warning 'Zc:forScope-' - deprecated for VS2017
+			   For future Visual Studio compilers, might need changes throughout for loops
+	31.05.19   Rebuild with revised 2.007 SpoutLibrary
+			   VS2017 /MT with Visual Studio 2017 toolset (v141), Windows SDK 10.0.17763.0
+
+	03.10.19   Change from DX9 to DX9EX
+		
+		Credit to Patrick Pomerleau of Nest Immersion (http://nestimmersion.ca/)
+
+			   Search on "DX9EX" for the changes.
+					Milkdrop2PcmVisualizer.cpp
+					milkdropfs.cpp
+					pluginshell.cpp
+					pluginshell.h
+					dxcontext.cpp
+					dxcontext.h
+
+			   - Set application to use Spout DX9 mode
+			   - Add function : IDirect3D9Ex* CPluginShell::GetDX9object()
+			   - OpenSender - set Spout to use the application DX9EX object and device
+			   - Use new surface copy function WriteDX9surface rather than CPU pixel copy.
+	05.10.19   - Lock resolution to 1920x1080
+			   - Retain VJ console for standalone
+			   - Remove close button from VJ console
+			   - Add : F8 - copy Winamp Milkdrop generated config file
+	08.10.19   - Change window resolution to 1280x720
+			     Retain output resolution 1920x1080
+			   - Modify WriteDX9surface and SetDX9device - see milkdropfs and plugin.cpp
+			     Modify corresponding Spout SDK and SpoutLibrary functions
+			   - Rebuild VS2017 /MT Win32 with modified 2.007 SpoutLibrary
+			     Search on "// SPOUT DX9EX" for changes
+	29.10.19   - Milkdrop2PcmVisualizer.cpp
+			       Change dpi awareness to use SetProcessDpiAwarenessContext
+			       for Windows 7 compatibility
+				   Remove #include <ShellScalingApi.h> and #pragma comment(lib, "shcore.lib")
+
+    15.05.23   - Change from SpoutLibrary to SpoutDX9 support class
+                 Changed files : 
+                   vis_milk2\plugin.cpp
+                   vis_milk2\plugin.h
+                   vis_milk2\Milkdrop2PcmVisualizer.cpp
+                   vis_milk2\milkdropfs.cpp
+                   vis_milk2\pluginshell.h
+                 nseel2/nseel-compiler.c
+                   remove "floor" intrinsic re-definition
+                 Add spoutDX9 folder and files
+                 Add spoutDX9 filter to project
+                 Project > Properties > Include Directories
+                 Specifically include $(WindowsSDK_IncludePath) before $(DXSDK_DIR)Include
+                 to prevent macro re-definitions with Windows Kits\10 together with 
+                 Microsoft DirectX SDK (June 2010)
+                 Rebuild Visual Studio 2022 Release/Win32
+    25.09.23     MyWindowProc - WM_KEYDOWN default - fall through
+    26.09.23     SendDX9surface - add update flag to allow a fixed sender size if false
+                 SpoutDX9.cpp/CheckDX9sender - CreateSharedDX9Texture to new width and height for size change
+
+
 */
 
 #include "plugin.h"
@@ -509,8 +629,10 @@ Order of Function Calls
 
 static bool m_bAlwaysOnTop = false;
 int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
+int HardcutMode = 0;
+int timetick = 0.1;
 bool TranspaMode = false;
-
+bool ShowPresetOnTitle = 0;
 void NSEEL_HOSTSTUB_EnterMutex(){}
 void NSEEL_HOSTSTUB_LeaveMutex(){}
 
@@ -887,7 +1009,7 @@ void CPlugin::OverrideDefaults()
     m_max_fps_dm            = 0;      // 1-120, or 0 for 'unlimited'
     m_max_fps_w             = 0;      // 1-120, or 0 for 'unlimited'
     // m_show_press_f1_msg     = 1;       // 0 or 1
-    // m_allow_page_tearing_w  = 0;       // 0 or 1
+    m_allow_page_tearing_w  = 0;       // 0 or 1
     // m_allow_page_tearing_fs = 0;       // 0 or 1
     // m_allow_page_tearing_dm = 1;       // 0 or 1
     // m_minimize_winamp       = 1;       // 0 or 1
@@ -927,6 +1049,29 @@ void CPlugin::MyPreInitialize()
     // (If you want to change the default values for settings that are part of
     //   the plugin shell (framework), do so from OverrideDefaults() above.)
 
+
+	// =========================================================
+	// SPOUT initialisation
+	//
+    spoutDX9 spoutsender;
+
+	// Error logging to AppData
+	// EnableSpoutLogFile("SpoutBeatdrop.log");
+	// For debugging 
+	// EnableSpoutLog(); // Shows Spout logs on the console
+    // OpenSpoutConsole(); // Empty console
+
+	sprintf(WinampSenderName, "BeatDrop");
+	bInitialized = false;
+	bSpoutOut = true; // User on/off toggle
+	bSpoutChanged = false; // set to write config on exit
+	// DirectX 11 mode uses a format that is incompatible with DirectX 9 receivers
+	// DirectX9 mode can fail with some drivers. Noted on Intel/NVIDIA laptop.
+	g_Width = 0;
+	g_Height = 0;
+	g_hwnd = NULL;
+	g_hdc = NULL;
+	
     // seed the system's random number generator w/the current system time:
     //srand((unsigned)time(NULL));  -don't - let winamp do it
 
@@ -949,12 +1094,12 @@ void CPlugin::MyPreInitialize()
 	//m_nWidth			= 1024;
 	//m_nHeight			= 768;
 	//m_nDispBits		= 16;
-    m_nCanvasStretch    = 100;   //Maybe it looks sharper, idk
+    m_nCanvasStretch    = 100;  //Maybe it looks sharper, idk
 	m_nTexSizeX			= -1;	// -1 means "auto"
 	m_nTexSizeY			= -1;	// -1 means "auto"
 	m_nTexBitsPerCh     =  8;
 	m_nGridX			= 64;//32;
-	m_nGridY			= 32;//24;
+	m_nGridY			= 48;//24;
 
 	m_bShowPressF1ForHelp = true;
 	//lstrcpy(m_szMonitorName, "[don't use multimon]");
@@ -963,7 +1108,7 @@ void CPlugin::MyPreInitialize()
 	m_bAutoGamma    = true;
 	//m_nFpsLimit			= -1;
 	m_bEnableRating			= true;
-        //m_bInstaScan            = true;  //I turned on to scan the presets in a faster way (I know?)
+    //m_bInstaScan            = false;
 	m_bSongTitleAnims		= true;
 	m_fSongTitleAnimDuration = 1.7f;
 	m_fTimeBetweenRandomSongTitles = -1.0f;
@@ -1113,7 +1258,7 @@ void CPlugin::MyPreInitialize()
 	//td_custom_msg_font   m_CustomMessageFont[MAX_CUSTOM_MESSAGE_FONTS];
 	//td_custom_msg        m_CustomMessage[MAX_CUSTOM_MESSAGES];
 
-    //texmgr      m_texmgr;		// for user sprites
+    texmgr      m_texmgr;		// for user sprites
 
 	m_supertext.bRedrawSuperText = false;
 	m_supertext.fStartTime = -1.0f;
@@ -1138,6 +1283,7 @@ void CPlugin::MyPreInitialize()
     if (p) *(p+1) = 0;
    	swprintf(m_szMsgIniFile, L"%s%s", szConfigDir, MSG_INIFILE );
 	swprintf(m_szImgIniFile, L"%s%s", szConfigDir, IMG_INIFILE );
+
 }
 
 //----------------------------------------------------------------------
@@ -1160,6 +1306,11 @@ void CPlugin::MyReadConfig()
 
 	int n=0;
     wchar_t *pIni = GetConfigIniFile();
+
+	// ======================================
+	// SPOUT - save whether in DirectX11 (true) or DirectX 9 (false) mode, default true
+	bSpoutOut = GetPrivateProfileBoolW(L"settings", L"bSpoutOut", bSpoutOut, pIni);
+	// ======================================
 
 	m_bFirstRun		= !GetPrivateProfileBoolW(L"settings",L"bConfigured" ,false,pIni);
 	m_bEnableRating = GetPrivateProfileBoolW(L"settings",L"bEnableRating",m_bEnableRating,pIni);
@@ -1198,14 +1349,15 @@ void CPlugin::MyReadConfig()
     m_bPresetLockOnAtStartup = GetPrivateProfileBoolW(L"settings",L"bPresetLockOnAtStartup",m_bPresetLockOnAtStartup,pIni);
 	m_bPreventScollLockHandling = GetPrivateProfileBoolW(L"settings",L"m_bPreventScollLockHandling",m_bPreventScollLockHandling,pIni);
 
-    m_nCanvasStretch = 100;  //GetPrivateProfileIntW(L"settings",L"nCanvasStretch"    ,m_nCanvasStretch,pIni)
-	m_nTexSizeX		= -1;  //GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni)
-	m_nTexSizeY		= -1;  //m_nTexSizeX
+    m_nCanvasStretch = 100;  //GetPrivateProfileIntW(L"settings",L"nCanvasStretch"    ,m_nCanvasStretch,pIni);
+	m_nTexSizeX		= -1;  //GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni);
+	m_nTexSizeY		= -1;  //m_nTexSizeX;
 	m_bTexSizeWasAutoPow2   = (m_nTexSizeX == -2);
 	m_bTexSizeWasAutoExact = (m_nTexSizeX == -1);
 	m_nTexBitsPerCh = GetPrivateProfileIntW(L"settings", L"nTexBitsPerCh", m_nTexBitsPerCh, pIni);
-	m_nGridX	= 64;  //GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni)
-	m_nGridY        = 32;  //m_nGridX*3/4
+	m_nGridX		= 64;  //GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni);
+	m_nGridY        = 48;  //m_nGridX*3/4;
+
     m_nMaxPSVersion_ConfigPanel = GetPrivateProfileIntW(L"settings",L"MaxPSVersion",m_nMaxPSVersion_ConfigPanel,pIni);
     m_nMaxImages    = GetPrivateProfileIntW(L"settings",L"MaxImages",m_nMaxImages,pIni);
     m_nMaxBytes     = GetPrivateProfileIntW(L"settings",L"MaxBytes" ,m_nMaxBytes ,pIni);
@@ -1214,6 +1366,7 @@ void CPlugin::MyReadConfig()
 	m_fBlendTimeAuto			= GetPrivateProfileFloatW(L"settings",L"fBlendTimeAuto"         ,m_fBlendTimeAuto         ,pIni);
 	m_fTimeBetweenPresets		= GetPrivateProfileFloatW(L"settings",L"fTimeBetweenPresets"    ,m_fTimeBetweenPresets    ,pIni);
 	m_fTimeBetweenPresetsRand	= GetPrivateProfileFloatW(L"settings",L"fTimeBetweenPresetsRand",m_fTimeBetweenPresetsRand,pIni);
+
 	m_fHardCutLoudnessThresh	= GetPrivateProfileFloatW(L"settings",L"fHardCutLoudnessThresh" ,m_fHardCutLoudnessThresh ,pIni);
 	m_fHardCutHalflife			= GetPrivateProfileFloatW(L"settings",L"fHardCutHalflife"       ,m_fHardCutHalflife       ,pIni);
 	m_fSongTitleAnimDuration	= GetPrivateProfileFloatW(L"settings",L"fSongTitleAnimDuration" ,m_fSongTitleAnimDuration ,pIni);
@@ -1270,6 +1423,11 @@ void CPlugin::MyWriteConfig()
 
 	wchar_t szSectionName[] = L"settings";
 
+	// ================================
+	// SPOUT
+	WritePrivateProfileIntW(bSpoutOut, L"bSpoutOut", pIni, L"settings");
+	// ================================
+
 	WritePrivateProfileIntW(m_bSongTitleAnims,		L"bSongTitleAnims",		pIni, L"settings");
 	WritePrivateProfileIntW(m_bHardCutsDisabled,	    L"bHardCutsDisabled",	pIni, L"settings");
 	WritePrivateProfileIntW(m_bEnableRating,		    L"bEnableRating",		pIni, L"settings");
@@ -1288,7 +1446,7 @@ void CPlugin::MyWriteConfig()
 	//WritePrivateProfileIntW(m_bAlways3D, 			"bAlways3D",			pIni, "settings");
     //WritePrivateProfileFloat(m_fStereoSep,          "fStereoSep",           pIni, "settings");
 	//WritePrivateProfileIntW(m_bFixSlowText,		    "bFixSlowText",			pIni, "settings");
-	//WritePrivateProfileInt(m_bAlwaysOnTop,		    "bAlwaysOnTop",			pIni, "settings");
+	//itePrivateProfileInt(m_bAlwaysOnTop,		    "bAlwaysOnTop",			pIni, "settings");
 	//WritePrivateProfileIntW(m_bWarningsDisabled,	    "bWarningsDisabled",	pIni, "settings");
 	WritePrivateProfileIntW(m_bWarningsDisabled2,	L"bWarningsDisabled2",	pIni, L"settings");
 	//WritePrivateProfileIntW(m_bAnisotropicFiltering,	"bAnisotropicFiltering",pIni, "settings");
@@ -1475,7 +1633,18 @@ void CPlugin::CleanUpMyNonDx9Stuff()
     // Be sure to clean up any objects here that were
     //   created/initialized in AllocateMyNonDx9Stuff.
 
-    //sound.Finish();
+	// =========================================================
+	// SPOUT cleanup on exit
+	//
+	spoutsender.ReleaseDX9sender();
+    spoutsender.CloseDirectX9();
+
+	// If Spout output or DirectX mode has been changed, save the config file
+	// so it is started in the selected mode the next time
+	if (bSpoutChanged) MyWriteConfig();
+	// =========================================================
+	
+	//sound.Finish();
 
     // NOTE: DO NOT DELETE m_gdi_titlefont_doublesize HERE!!!
 
@@ -2846,7 +3015,7 @@ bool CPlugin::EvictSomeTexture()
     return true;
 }
 
-std::wstring texture_exts[] = { L"jpg", L"dds", L"png", L"tga", L"bmp", L"dib", L"jfif", };
+std::wstring texture_exts[] = { L"jpg", L"jfif", L"dds", L"png", L"tga", L"bmp", L"dib"};
 const wchar_t szExtsWithSlashes[] = L"jpg|png|dds|etc.";
 typedef std::vector<std::wstring> StringVec;
 bool PickRandomTexture(const wchar_t* prefix, wchar_t* szRetTextureFilename)  //should be MAX_PATH chars
@@ -3896,6 +4065,7 @@ void CPlugin::CleanUpMyDX9Stuff(int final_cleanup)
 
 void CPlugin::MyRenderFn(int redraw)
 {
+
 	EnterCriticalSection(&g_cs);
 
     // Render a frame of animation here.
@@ -3998,6 +4168,7 @@ void CPlugin::MyRenderFn(int redraw)
     }
 
     LeaveCriticalSection(&g_cs);
+
 }
 
 //----------------------------------------------------------------------
@@ -4193,14 +4364,14 @@ void CPlugin::MyRenderUI(
         // d) debug information
 		if (m_bShowDebugInfo)
 		{
-			SelectFont(SIMPLE_FONT);
-            	swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
+            SelectFont(SIMPLE_FONT);
+			swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_BASS), (float)(*m_pState->var_pf_bass));
+                swprintf(buf, L"%s %s: %6.4f ",((double)mysound.imm_rel[0] >= 1.3) ? L"+" : L" ", L"bass: ", (float)(*m_pState->var_pf_bass));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_MID), (float)(*m_pState->var_pf_mid));
+                swprintf(buf, L"%s %s: %6.4f ", ((double)mysound.imm_rel[1] >= 1.3) ? L"+" : L" ", L"mid: ", (float)(*m_pState->var_pf_mid));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_TREB), (float)(*m_pState->var_pf_treb));
+                swprintf(buf, L"%s %s: %6.4f ", ((double)mysound.imm_rel[2] >= 1.3) ? L"+" : L" ", L"treb: ", (float)(*m_pState->var_pf_treb));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -4853,7 +5024,9 @@ void CPlugin::MyRenderUI(
                         int idx = m_nMashPreset[mash];
 
                         wchar_t buf[1024];
-                        swprintf(buf, L"%s%s", wasabiApiLangString(mashNames[mash]), m_presets[idx].szFilename);
+						// SPOUT
+                        // swprintf(buf, L"%s%s", wasabiApiLangString(mashNames[mash]), m_presets[idx].szFilename);
+						swprintf(buf, L"%s%s", wasabiApiLangString(mashNames[mash]), m_presets[idx].szFilename.c_str());
                         RECT r2 = orig_rect;
                         r2.top += h;
                         h += m_text.DrawTextW(GetFont(SIMPLE_FONT), buf, -1, &r2, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | (pass==0 ? DT_CALCRECT : 0), (mash==m_nMashSlot) ? PLAYLIST_COLOR_HILITE_TRACK : PLAYLIST_COLOR_NORMAL, false);
@@ -5133,7 +5306,6 @@ void CPlugin::MyRenderUI(
 		}
     }
 }
-//Always On Top
 void ToggleAlwaysOnTop(HWND hwnd) {
 
 	RECT rect;
@@ -5432,7 +5604,16 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 		}
         return 1; // end case WM_CHAR
 
+    case WM_MOUSEWHEEL:
+
+    if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && !m_bPresetLockedByCode)
+        NextPreset(0);
+    else if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && !m_bPresetLockedByCode)
+        PrevPreset(0);
+
+    return 0;
     case WM_KEYDOWN:    // virtual-key codes
+
         // Note that some keys will never reach this point, since they are
         //   intercepted by the plugin shell (see PluginShellWindowProc(),
         //   at the end of pluginshell.cpp for which ones).
@@ -5440,7 +5621,15 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         //   "virtual-key codes [win32]" in the msdn help.
         nRepeat = LOWORD(lParam);
 
+		// SPOUT DEBUG
+		// Special case for F1 help display in pluginshell
+		// to clear the vj screen of any existing text
 		if (wParam == VK_F1) {
+			// Bring up the VJ console if it has been minimised
+			if (GetFocus() == GetPluginWindow()) {
+				if (IsIconic(m_hTextWnd))
+					ShowWindow(m_hTextWnd, SW_RESTORE);
+			}
 			// Change to regular
 			m_UI_mode = UI_REGULAR;
 			m_waitstring.bActive = false; // For F8
@@ -5449,7 +5638,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			ToggleHelp();
 			return 0;
 		}
-		    
+
 		switch(wParam)
 		{
 		//case VK_F9:
@@ -5533,8 +5722,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				wsprintfW(m_szSongTitle, L"Always On Top OFF"); LaunchSongTitleAnim();
 			}
 			 return 0;
-			 
-		case VK_F12:
+        case VK_F12:
             TranspaMode = !TranspaMode;
         if (TranspaMode)
             {
@@ -5547,6 +5735,76 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 wsprintfW(m_szSongTitle, L"Transparency Mode OFF"); LaunchSongTitleAnim();
             }
         return 0;
+        //case VK_F2:
+
+        //    ShowPresetOnTitle = !ShowPresetOnTitle;
+        //    if (ShowPresetOnTitle)
+        //    {
+        //        wchar_t buf[1024] = { 0 };
+        //        wchar_t PresetInfoWindowUpdater = swprintf(buf, L"BeatDrop Music Visualizer ⫸ %s", (m_nLoadingPreset != 0) ? m_pNewState->m_szDesc : m_pState->m_szDesc);
+        //        SetWindowText(hWnd, PresetInfoWindowUpdater);
+        //        wsprintfW(m_szSongTitle, L"Show Preset Name on Window Title ON"); LaunchSongTitleAnim();
+        //    }
+           // else
+           // {
+           //     SetWindowText(hWnd, "BeatDrop Music Visualizer");
+           //     wsprintfW(m_szSongTitle, L"Show Preset Name on Window Title OFF"); LaunchSongTitleAnim();
+           //}
+            //return 0;  //WIP: Show Preset Info on Window
+         
+
+        //case VK_F11:   //NOT WORKING
+        //{
+        //    HardcutMode++;
+        //    if (HardcutMode == 1)
+        //        {
+        //            m_bHardCutsDisabled = false;
+        //            wsprintfW(m_szSongTitle, L"Hardcut Mode: Normal"); LaunchSongTitleAnim();
+        //        }
+        //    if (HardcutMode == 2)
+        //    {
+        //        m_bHardCutsDisabled = true;
+        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend"); LaunchSongTitleAnim();
+        //    }
+        //    if (HardcutMode == 2) //WIP: Bass Blend
+        //    {
+        //        int upd = GetTime();
+        //        if (upd % 1 == 0) timetick += 0.1;
+        //        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        //        {
+        //            if ((double)mysound.imm_rel[0] > 1.8 && timetick >= 1)
+        //            {
+        //                if (m_nLoadingPreset == 0)
+        //                    NextPreset(0.95);
+        //                timetick = 0;
+        //            }
+        //        }
+        //    }
+
+        //    if (HardcutMode == 3)
+        //    {
+        //        m_bHardCutsDisabled = true;
+        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass"); LaunchSongTitleAnim();
+        //    }
+        //    if (HardcutMode == 3)
+        //    {
+        //    if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        //        if ((double)mysound.imm_rel[0] > 2)
+        //        {
+        //            if (m_nLoadingPreset == 0)
+        //                NextPreset(0.0f);
+        //        }
+        //    }
+
+        //    if (HardcutMode == 4)
+        //    {
+        //        HardcutMode = 0;
+        //        m_bHardCutsDisabled = true;
+        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: OFF"); LaunchSongTitleAnim();
+        //    }
+        //}   //WORK IN PROGRESS
+
+
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
@@ -5582,12 +5840,15 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             //SetScrollLock(m_bPresetLockedByUser);
             //int set = m_bPresetLockedByUser ?
 
-			return 0; // we processed (or absorbed) the key
-		//case VK_F6:	break;
-		//case VK_F7: conflict
-		//case VK_F8:	break;
-		//case VK_F9: conflict
-		}
+		    // check ???
+		    //case VK_F6:	break;
+		    //case VK_F7: conflict
+		    //case VK_F8:	break;
+		    //case VK_F9: conflict
+
+            // Default - fall through
+
+        } // end switch(wParam)
 
 		// next handle the waitstring case (for string-editing),
 		//	then the menu navigation case,
@@ -6035,6 +6296,17 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				m_waitstring.bActive = true;
 				return 0; // we processed (or absorbed) the key
 			}
+			// SPOUT - put back in for vj mode.
+			else {
+				// Don't close if esc pressed when vj window has focus
+				if (GetFocus() == GetPluginWindow()) {
+					// SPOUT - MessageBox to make sure
+					if (MessageBoxA(GetPluginWindow(), "Are you sure you want to exit BeatDrop?", "BeatDrop Music Visualizer", MB_YESNO | MB_TOPMOST) == IDYES) {
+						PostMessage(hWnd, WM_CLOSE, 0, 0);
+					}
+					return 0;
+				}
+			}
 			/*else if (hwnd == GetPluginWindow())		// (don't close on ESC for text window)
 			{
 				dumpmsg("User pressed ESCAPE");
@@ -6126,12 +6398,13 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             }
             break;
 		case VK_END:
-			if (m_UI_mode == UI_LOAD)
+			// printf("VK_END (%d)\n", m_UI_mode);
+			if (m_UI_mode == UI_LOAD) // 2
             {
 				m_nPresetListCurPos = m_nPresets - 1;
 				return 0; // we processed (or absorbed) the key
             }
-            else if (m_UI_mode == UI_MASHUP)
+            else if (m_UI_mode == UI_MASHUP) // 14
             {
                 m_nMashPreset[m_nMashSlot] = m_nPresets-1;
                 m_nLastMashChangeFrame[m_nMashSlot] = GetFrame();  // causes delayed apply
@@ -6297,7 +6570,42 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			//m_nNumericInputNum = 0;
 			return 0;
 
-        case 'T':
+
+		// ========================================
+		// SPOUT
+		//
+		//		CTRL-Z - start or stop spout output
+		//
+		case 'Z':
+			if (bCtrlHeldDown)
+			{
+				bSpoutChanged = true; // write config on exit
+				bSpoutOut = !bSpoutOut;
+				if (bSpoutOut) {
+					// Start spout
+					lstrcpyW(m_szSavedSongTitle, m_szSongTitle);
+					wsprintfW(m_szSongTitle, L"Spout output enabled.");
+					LaunchSongTitleAnim();
+					lstrcpyW(m_szSongTitle, m_szSavedSongTitle);
+				}
+				else {
+					// Stop Spout
+					lstrcpyW(m_szSavedSongTitle, m_szSongTitle);
+					wsprintfW(m_szSongTitle, L"Spout output disabled.");
+					LaunchSongTitleAnim();
+					lstrcpyW(m_szSongTitle, m_szSavedSongTitle);
+				}
+				if (bInitialized) {
+					spoutsender.ReleaseDX9sender();
+					bInitialized = false;
+                    // Initialized next render frame
+                    // milkdropfs.cpp - RenderFrame / OpenSender
+				}
+				return 0;
+			}
+		break;
+		
+		case 'T':
             if (bCtrlHeldDown)
             {
     			// stop display of custom message or song title.
@@ -6305,6 +6613,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 return 0;
             }
             break;
+
         case 'K':
             if (bCtrlHeldDown)      // kill all sprites
             {
@@ -6356,6 +6665,11 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 	// straight WM_CHAR messages should be sent in.
 
     // return 0 if you process/absorb the key; otherwise return 1.
+
+	// SPOUT DEBUG for BeatDrop vj mode
+	// For "L, "M', "S" and "VK_F8"
+	// if pluginshell VK_F1 help has been pressed
+	// reset help and clear the window
 
 	if (m_UI_mode == UI_LOAD && ((wParam >= 'A' && wParam <= 'Z') || (wParam >= 'a' && wParam <= 'z')))
 	{
@@ -6435,6 +6749,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		return 0; // we processed (or absorbed) the key
 
 	case 'r':
+	case 'R':
 		m_bSequentialPresetOrder = !m_bSequentialPresetOrder;
         {
             wchar_t buf[1024], tmp[64];
@@ -6533,6 +6848,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
         break;
 
 	// row 2 keys
+    // 'A' KEY IS FREE!!
     // 'D' KEY IS FREE!!
 	case 'p':
 		m_pState->m_fVideoEchoAlpha -= 0.1f;
@@ -6542,8 +6858,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		m_pState->m_fVideoEchoAlpha += 0.1f;
 		if (m_pState->m_fVideoEchoAlpha.eval(-1) > 1.0f) m_pState->m_fVideoEchoAlpha = 1.0f;
 		return 0; // we processed (or absorbed) the key
-	/*		
-	case 'd':
+	/*case 'd':
 		m_pState->m_fDecay += 0.01f;
 		if (m_pState->m_fDecay.eval(-1) > 1.0f) m_pState->m_fDecay = 1.0f;
 		return 0; // we processed (or absorbed) the key
@@ -6632,8 +6947,8 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 's':				// SAVE PRESET
 	case 'S':
+		// SPOUT
 		m_show_help = false;
-		
 		if (m_UI_mode == UI_REGULAR)
 		{
 			//m_bPresetLockedByCode = true;
@@ -6658,10 +6973,11 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
         m_bPresetLockedByUser = !m_bPresetLockedByUser;
         return 0;
 
-	case 'l':				// LOAD PRESET
+	case 'l': // LOAD PRESET
 	case 'L':
+		// SPOUT
 		m_show_help = false;
-		
+
 		if (m_UI_mode == UI_LOAD)
 		{
 			m_UI_mode = UI_REGULAR;
@@ -6683,13 +6999,14 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 
 	case 'm':
 	case 'M':
+
+		// SPOUT
 		m_show_help = false;
 
 		if (m_UI_mode == UI_MENU)
 			m_UI_mode = UI_REGULAR;
 		else if (m_UI_mode == UI_REGULAR || m_UI_mode == UI_LOAD)
 			m_UI_mode = UI_MENU;
-
 		return 0; // we processed (or absorbed) the key
 
 	case '-':
@@ -6703,7 +7020,6 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 		m_nNumericInputDigits = 0;
 		m_nNumericInputNum = 0;
         return 0;
-
 	}
 
 	if (wParam == 'y' || wParam == 'Y')	// 'y' or 'Y'
@@ -7366,8 +7682,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 	    m_pOldState = temp;
 
         DWORD ApplyFlags = STATE_ALL;
-         ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-         ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pState->Import(m_szCurrentPresetFile, GetTime(), m_pOldState, ApplyFlags);
 
@@ -7400,8 +7716,8 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         ZeroMemory(&m_NewShaders, sizeof(PShaderSet));
 
         DWORD ApplyFlags = STATE_ALL;
-        // ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
-        // ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
+        ApplyFlags ^= (m_bWarpShaderLock ? STATE_WARP : 0);
+        ApplyFlags ^= (m_bCompShaderLock ? STATE_COMP : 0);
 
         m_pNewState->Import(szPresetFilename, GetTime(), m_pOldState, ApplyFlags);
 
@@ -7910,7 +8226,7 @@ void CPlugin::UpdatePresetList(bool bBackground, bool bForce, bool bTryReselectC
             // the load still takes a while even at THREAD_PRIORITY_ABOVE_NORMAL,
             // because it is waiting on the HDD so much...
             // but the OS is smart, and the CPU stays nice and zippy in other threads =)
-        	SetThreadPriority(g_hThread,THREAD_PRIORITY_ABOVE_NORMAL); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
+        	SetThreadPriority(g_hThread,THREAD_PRIORITY_HIGHEST); //THREAD_PRIORITY_IDLE,    THREAD_PRIORITY_LOWEST,    THREAD_PRIORITY_NORMAL,    THREAD_PRIORITY_HIGHEST,
         }
     }
 
@@ -8836,44 +9152,40 @@ void CPlugin::DoCustomSoundAnalysis()
     memcpy(mysound.fWave[1], m_sound.fWaveform[1], sizeof(float)*576);
 
     // do our own [UN-NORMALIZED] fft
-	float fWaveLeft[576]; //left channel
-	float fWaveRight[576] //right channel
-	for (int i=0; i<576; i++)
-	{
-        	fWaveLeft[i] = m_sound.fWaveform[0][i];
-		fWaveRight[i] = m_sound.fWaveform[1][i];
-	}
+	float fWaveLeft[576];
+    float fWaveRight[576];
+for (int i=0;i<576;i++)
+    {
+        fWaveLeft[i] = m_sound.fWaveform[0][i];
+        fWaveRight[i] = m_sound.fWaveform[1][i];
+    }
 
 	memset(mysound.fSpecLeft, 0, sizeof(float)*MY_FFT_SAMPLES);
-	memset(mysound.fSpecRight, 0, sizeof(float)*MY_FFT_SAMPLES);
+    memset(mysound.fSpecRight, 0, sizeof(float)*MY_FFT_SAMPLES);
 
 	myfft.time_to_frequency_domain(fWaveLeft, mysound.fSpecLeft);
-	myfft.time_to_frequency_domain(fWaveRight, mysound.fSpecRight);
+    myfft.time_to_frequency_domain(fWaveRight, mysound.fSpecRight);
 	//for (i=0; i<MY_FFT_SAMPLES; i++) fSpecLeft[i] = sqrtf(fSpecLeft[i]*fSpecLeft[i] + fSpecTemp[i]*fSpecTemp[i]);
 
 	// sum spectrum up into 3 bands
-	//Incubo_'s fixed beat detection (pretty perfect, accurate)
 	for (i=0; i<3; i++)
 	{
-	int start = MY_FFT_SAMPLES*i/192;
+		//note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
+        int start = MY_FFT_SAMPLES*i/194;
         int end = MY_FFT_SAMPLES*(i+1)/186;
 		int j;
-		//bass
 
         if (i == 1)
         {
-            start = MY_FFT_SAMPLES * i / 64;
-            end = MY_FFT_SAMPLES * (i + 1) / 36;
-		//mid
+            start = MY_FFT_SAMPLES * i / 68;
+            end = MY_FFT_SAMPLES * (i + 1) / 32;
         }
 
         if (i == 2)
         {
-            start = MY_FFT_SAMPLES*i/6;
-            end = MY_FFT_SAMPLES*(i + 1)/6;
-		//treb
+            start = MY_FFT_SAMPLES*i/8;
+            end = MY_FFT_SAMPLES*(i + 1)/3;
         }
-
 		mysound.imm[i] = 0;
 
 		for (j=start; j<end; j++)
@@ -8927,7 +9239,10 @@ void CPlugin::GenWarpPShaderText(char *szShaderText, float decay, bool bWrap)
     p += sprintf(p, "%c", 1);
 
     p += sprintf(p, "    // sample previous frame%c", LF);
-    p += sprintf(p, "    ret = tex2D( sampler%ls_main, uv ).xyz;%c", bWrap ? L"" : L"_fc", LF);
+	// SPOUT
+	// Avoid freeze
+	p += sprintf(p, "    ret = tex2D( sampler%ls_main, uv ).xyz;%c", bWrap ? L"" : L"_fc", LF);
+	// p += sprintf(p, "    ret = tex2D( sampler%s_main, uv ).xyz;%c", bWrap ? L"" : L"_fc", LF);
     p += sprintf(p, "    %c", LF);
     p += sprintf(p, "    // darken (decay) over time%c", LF);
     p += sprintf(p, "    ret *= %.2f; //or try: ret -= 0.004;%c", decay, LF);
@@ -8992,3 +9307,36 @@ void CPlugin::GetSongTitle(wchar_t *szSongTitle, int nSize)
     emulatedWinampSongTitle = "";
     lstrcpynW(szSongTitle, AutoWide(emulatedWinampSongTitle.c_str(), CP_UTF8), nSize);
 }
+
+// =========================================================
+// SPOUT initialization function
+// Initializes OpenGL and a Spout sender
+//
+bool CPlugin::OpenSender(unsigned int width, unsigned int height)
+{
+    SpoutLogNotice("CPlugin::OpenSender(%d, %d)", width, height);
+
+    // Close existing sender
+    if(bInitialized) spoutsender.ReleaseDX9sender();
+    bInitialized = false;
+
+    // SPOUT - DX9EX
+    // Set up for using the application DX9ex device.
+    // The sender shared texture is then created using this device.
+    // Only possible for DX9 mode.
+    spoutsender.SetDX9device(GetDevice());
+
+    // Give the sender a name
+    spoutsender.SetSenderName(WinampSenderName);
+
+	g_Width = width;
+	g_Height = height;
+	bSpoutOut = true;
+	bInitialized = true;
+
+	return true;
+
+} // end OpenSender
+
+
+// =========================================================
