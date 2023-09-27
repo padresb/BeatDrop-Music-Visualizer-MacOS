@@ -20,7 +20,7 @@ Features added:
 * Now it can support up to 16 custom shapes and waves!
 * Real-time toggling FPS by pressing F3!
 * New waveforms (from 8 to 15)
-* Spout Support
+* Spout Support (thanks @leadedge for helping me)
 
 Features to be added:
 * Toggle 3D Support
