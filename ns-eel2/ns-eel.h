@@ -132,9 +132,6 @@ extern int NSEEL_RAM_memused_errors;
 
 //#define NSEEL_EEL1_COMPAT_MODE // supports old behaviors (continue after failed compile), old functions _bnot etc. disables string support (strings were used as comments in eel1 etc)
 
-#define NSEEL_MAX_VARIABLE_NAMELEN 16
-// define this to override the max variable length (default is 16 bytes)
-
 #define NSEEL_MAX_VARIABLE_NAMELEN 128  // define this to override the max variable length
 #define NSEEL_MAX_EELFUNC_PARAMETERS 40
 #define NSEEL_MAX_FUNCSIG_NAME 2048 // longer than variable maxlen, due to multiple namespaces
