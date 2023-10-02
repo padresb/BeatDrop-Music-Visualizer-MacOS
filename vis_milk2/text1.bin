@@ -1,37 +1,47 @@
  GENERAL:
 
-   ESC             exit help / menus
-   ALT + ENTER     toggle fullscreen (or double-click)
-   ALT + S         toggle multiple monitor stretch
-   CTRL + Z        enable/disable spout output
+   ESC                  exit BeatDrop / menus
+   ALT + ENTER          toggle fullscreen (or double-click)
+   ALT + S              toggle multiple monitor stretch
+   CTRL + Z             enable/disable spout output
 
  PRESETS:
 
-   SPACE / H       soft / hard cut to next preset
-   BACKSPACE       go back to previous preset
-   ` / ~           [un]lock current preset
-   R               toggle random/sequential preset order 
-   L               load specific preset
-   M               show/hide preset-editing Menu
-   S               save new preset
-   A               do random mini-mash-up
-   D               toggle warp & comp shader locks
-   !               randomize warp shader
-   @               randomize comp shader
+   SPACE / H            soft / hard cut to next preset
+   BACKSPACE            go back to previous preset
+   ` / ~                [un]lock current preset
+   R                    toggle random/sequential preset order 
+   L                    load specific preset
+   M                    show/hide preset-editing menu
+   S                    save new preset
+   A                    do random mini-mash-up
+   D                    toggle warp & comp shader locks
+   !                    randomize warp shader
+   @                    randomize comp shader
 
  INFO:
 
-   F1              help
-   F4              show preset info
-   F5              show fps
-   F6              show rating
+   F1                   show/hide help
+   F4                   show/hide preset info
+   F5                   show/hide fps
+   F6                   show/hide rating
    
  HOTKEYS:
 
-   F3              toggle fps to 30/60/90/120/144/240/360/Unlimited
-   F7              always on top
-   F10             freeze/unfreeze screen (only on windowed)
-   F12             transparency mode (removes the black background)
-   N               show per-frame monitor
-   K               enter sprite mode
-   Y               enter custom message mode
+   F3                   toggle fps to 30/60/90/120/144/240/360/Unlimited
+   F7                   always on top
+   F10                  freeze/unfreeze screen (only on windowed)
+   F12                  transparency mode (removes the black background)
+   N                    show per-frame monitor
+
+ CUSTOM SPRITES/MESSAGES:
+   K                    enter sprite mode
+   SHIFT + K            enter sprite kill mode
+   Y                    enter custom message mode
+   00-99                invoke sprites/messages (clears some sprites while introduced some digits - sprite kill mode)
+   *                    clears the number of digits that you introduced
+   DEL                  clear latest sprite from the slot/message
+   SHIFT + DEL          clear oldest sprite from the slot/message
+   SHIFT + CTRL + DEL   clear all the sprites/messages
+
+-- see on docs/milkdrop.html for more information. --
