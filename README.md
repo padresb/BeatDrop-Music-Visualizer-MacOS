@@ -13,26 +13,25 @@ Things fixed:
 * Keyboard function changes (F4: Show Preset Info, F5: Show FPS, F6: Show Rating, F1: Help)
 * Help text changes
 * Unlimited FPS, nTexSize to Auto, nCanvasStretch to 100 and more...
+* ...many and many bugs squashed.
 
 Features added:
 * Always On Top Feature (F7 Hotkey)
-* Multiple monitor stretch (Thanks to @milkdropper for the code - ALT + SHIFT Hotkey) 
+* Multiple monitor stretch (Thanks to @milkdropper for the code - ALT + S Hotkey) 
 * Now it can support up to 16 custom shapes and waves!
 * Real-time toggling FPS by pressing F3!
 * New waveforms (from 8 to 15)
+* Transparency Mode
 * Spout Support (thanks @leadedge for helping me)
 
 Features to be added:
 * Toggle 3D Support
-* AI Transparency Mode (when turned on, it uses chroma key on the black screen (only without comp shader)).
 * Getting BeatDrop's Song Title data from Windows Playback
 * Blending the visualizer with Webcam (Example: [Webcam > Spout > NestDrop on Reddit](https://www.reddit.com/r/NestDrop/comments/rh6zew/webcam_spout_nestdrop/) - F2 Hotkey
 * Double Preset Mode
 * Playback Hotkeys that can be controlled on any media players
-* DeepMash Mode
 * Pressing 'C' to add random values of ret /= float3(r, g, b); in the final of the comp shader code (with 30% chance to add ret /= float3(bass, mid, treb));
-* New transitions
-and choosing any transitions what you want by pressing P
+* New blending transitions
 
 Before compiling the code:
 * Anyone who uses Visual Studio 2019, please change from debug to release and build it.
