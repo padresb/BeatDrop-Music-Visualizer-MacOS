@@ -5753,7 +5753,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 60;
                 m_max_fps_dm = 60;
                 m_max_fps_w = 60;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"60 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5763,7 +5762,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 90;
                 m_max_fps_dm = 90;
                 m_max_fps_w = 90;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"90 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5773,7 +5771,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 120;
                 m_max_fps_dm = 120;
                 m_max_fps_w = 120;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"120 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5783,7 +5780,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 144;
                 m_max_fps_dm = 144;
                 m_max_fps_w = 144;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"144 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5793,7 +5789,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 240;
                 m_max_fps_dm = 240;
                 m_max_fps_w = 240;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"240 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5803,7 +5798,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 360;
                 m_max_fps_dm = 360;
                 m_max_fps_w = 360;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"360 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5813,7 +5807,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 0;
                 m_max_fps_dm = 0;
                 m_max_fps_w = 0;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"Unlimited fps!", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5824,7 +5817,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 30;
                 m_max_fps_dm = 30;
                 m_max_fps_w = 30;
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"30 fps", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5838,14 +5830,12 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			m_bAlwaysOnTop = !m_bAlwaysOnTop;
 			if (m_bAlwaysOnTop) {
 				ToggleAlwaysOnTop(hWnd);
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"Always On Top ON", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
 			}
 			else { 
 				ToggleAlwaysOnTop(hWnd);
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"Always On Top OFF", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5856,7 +5846,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         if (TranspaMode)
             {
                 ToggleTransparency(hWnd);
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"Transparency Mode ON", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -5864,7 +5853,6 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         else
             {
                 ToggleTransparency(hWnd);
-                m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
                 swprintf(buf, L"Transparency Mode OFF", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
@@ -6743,14 +6731,12 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				bSpoutOut = !bSpoutOut;
 				if (bSpoutOut) {
 					// Start spout
-                    m_bHardCutsDisabled = false;
                     wchar_t buf[1024], tmp[64];
                     swprintf(buf, L"Spout output enabled.", tmp, 64);
                     AddError(buf, 3.0f, ERR_NOTIFY, false);
 				}
 				else {
 					// Stop Spout
-                    m_bHardCutsDisabled = false;
                     wchar_t buf[1024], tmp[64];
                     swprintf(buf, L"Spout output disabled.", tmp, 64);
                     AddError(buf, 3.0f, ERR_NOTIFY, false);
