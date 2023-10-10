@@ -4121,11 +4121,11 @@ void CPlugin::MyRenderFn(int redraw)
     timetick2 += 0.0177;
 
     //HardCut Modes (controlled via F11 hotkey)
-    if (HardcutMode == 2) //Bass Blend
+   if (HardcutMode == 2) //Bass Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.98)
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.99)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.95f);
@@ -4142,7 +4142,16 @@ void CPlugin::MyRenderFn(int redraw)
                     NextPreset(0.0f);
             }
     }
-    if (HardcutMode == 4) //Treble
+    if (HardcutMode == 4) //Middle
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+            if ((double)mysound.imm_rel[1] > 1.75)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.0f);
+            }
+    }
+    if (HardcutMode == 5) //Treble
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
             if ((double)mysound.imm_rel[2] > 1.75)
@@ -4151,7 +4160,7 @@ void CPlugin::MyRenderFn(int redraw)
                     NextPreset(0.0f);
             }
     }
-    if (HardcutMode == 5) //Bass Fast Blend
+    if (HardcutMode == 6) //Bass Fast Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
             if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.49)
@@ -4161,17 +4170,17 @@ void CPlugin::MyRenderFn(int redraw)
                 timetick = 0;
             }
     }
-    if (HardcutMode == 6) //Treble Fast Blend
+    if (HardcutMode == 7) //Treble Fast Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
-            if ((double)mysound.imm_rel[2] > 1.75 && timetick >= 0.49)
+            if ((double)mysound.imm_rel[2] > 1.75 && timetick2 >= 0.49)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.4f);
-                timetick = 0;
+                timetick2 = 0;
             }
     }
-    if (HardcutMode == 7) //Bass Blend and Hard Cut Treble
+    if (HardcutMode == 8) //Bass Blend and Hard Cut Treble
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
@@ -4190,7 +4199,7 @@ void CPlugin::MyRenderFn(int redraw)
         }
     }
 
-    if (HardcutMode == 8) //Rhythmic Hardcut
+    if (HardcutMode == 9) //Rhythmic Hardcut
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
@@ -5909,38 +5918,45 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Treble", tmp, 64);
+                swprintf(buf, L"Hardcut Mode: Middle", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 5)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass Fast Blend", tmp, 64);
+                swprintf(buf, L"Hardcut Mode: Treble", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 6)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Treble Fast Blend", tmp, 64);
+                swprintf(buf, L"Hardcut Mode: Bass Fast Blend", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 7)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass Blend and Hardcut Treble", tmp, 64);
+                swprintf(buf, L"Hardcut Mode: Treble Fast Blend", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 8)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Rhythmic Hardcut", tmp, 64);
+                swprintf(buf, L"Hardcut Mode: Bass Blend and Hardcut Treble", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 9)
+            {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Rhythmic Hardcut", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+            }
+            if (HardcutMode == 10)
             {
                 HardcutMode = 0;
                 m_bHardCutsDisabled = true;
