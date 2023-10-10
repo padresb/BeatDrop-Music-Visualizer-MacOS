@@ -630,7 +630,8 @@ SPOUT :
 static bool m_bAlwaysOnTop = false;
 int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
 int HardcutMode = 0;
-int timetick = 0.1;
+float timetick = 0;
+float timetick2 = 0;
 bool TranspaMode = false;
 bool ShowPresetOnTitle = 0;
 void NSEEL_HOSTSTUB_EnterMutex(){}
@@ -1094,7 +1095,7 @@ void CPlugin::MyPreInitialize()
 	//m_nWidth			= 1024;
 	//m_nHeight			= 768;
 	//m_nDispBits		= 16;
-    m_nCanvasStretch    = 100;  //Maybe it looks sharper, idk
+    m_nCanvasStretch    = 100;
 	m_nTexSizeX			= -1;	// -1 means "auto"
 	m_nTexSizeY			= -1;	// -1 means "auto"
 	m_nTexBitsPerCh     =  8;
@@ -1322,6 +1323,7 @@ void CPlugin::MyReadConfig()
 	m_bShowPressF1ForHelp = GetPrivateProfileBoolW(L"settings",L"bShowPressF1ForHelp",m_bShowPressF1ForHelp,pIni);
 	//m_bShowMenuToolTips = GetPrivateProfileBool("settings","bShowMenuToolTips",m_bShowMenuToolTips,pIni);
 	m_bSongTitleAnims   = GetPrivateProfileBoolW(L"settings",L"bSongTitleAnims",m_bSongTitleAnims,pIni);
+    m_bEnablePresetStartup = GetPrivateProfileBoolW(L"settings", L"bEnablePresetStartup", m_bEnablePresetStartup, pIni);
 
 	m_bShowFPS			= GetPrivateProfileBoolW(L"settings",L"bShowFPS",       m_bShowFPS			,pIni);
 	m_bShowRating		= GetPrivateProfileBoolW(L"settings",L"bShowRating",    m_bShowRating		,pIni);
@@ -1377,6 +1379,7 @@ void CPlugin::MyReadConfig()
     // --------
 
 	GetPrivateProfileStringW(L"settings",L"szPresetDir",m_szPresetDir,m_szPresetDir,sizeof(m_szPresetDir),pIni);
+    GetPrivateProfileStringW(L"settings",L"szPresetStartup",m_szPresetStartup,m_szPresetStartup,sizeof(m_szPresetStartup), pIni);
 
 	ReadCustomMessages();
 
@@ -1453,6 +1456,7 @@ void CPlugin::MyWriteConfig()
     WritePrivateProfileIntW(m_bPresetLockOnAtStartup,L"bPresetLockOnAtStartup",pIni,L"settings");
 	WritePrivateProfileIntW(m_bPreventScollLockHandling,L"m_bPreventScollLockHandling",pIni,L"settings");
     // note: this is also written @ exit of the visualizer
+    WritePrivateProfileIntW(m_bEnablePresetStartup,L"bEnablePresetStartup",pIni,L"settings");
 
     WritePrivateProfileIntW(m_nCanvasStretch,        L"nCanvasStretch",   	pIni, L"settings");
     WritePrivateProfileIntW(m_nTexSizeX,			    L"nTexSize",				pIni, L"settings");
@@ -4113,6 +4117,70 @@ void CPlugin::MyRenderFn(int redraw)
     HWND focus = GetFocus();
     HWND cur = plugin;
 
+    timetick += 0.0177; //Optimized for 60 FPS
+    timetick2 += 0.0177;
+
+    //HardCut Modes (controlled via F11 hotkey)
+    if (HardcutMode == 2) //Bass Blend
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 1)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.95f);
+                timetick = 0;
+            }
+        }
+    }
+    if (HardcutMode == 3) //Bass
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+            if ((double)mysound.imm_rel[0] > 1.75)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.0f);
+            }
+    }
+    if (HardcutMode == 4) //Treble
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+            if ((double)mysound.imm_rel[2] > 1.75)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.0f);
+            }
+    }
+    if (HardcutMode == 5) //Treble Fast Blend
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+            if ((double)mysound.imm_rel[2] > 1.75 && timetick >= 0.5)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.4f);
+                timetick = 0;
+            }
+    }
+    if (HardcutMode == 6) //Bass Blend and Hard Cut Treble
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.5)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.24f);
+                timetick = 0;
+            }
+            if ((double)mysound.imm_rel[2] > 1.75 && timetick2 >= 0.5)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.0f);
+                timetick2 = 0;
+            }
+        }
+    }
+    //END
+
     m_bHasFocus = false;
     do
     {
@@ -4125,6 +4193,13 @@ void CPlugin::MyRenderFn(int redraw)
 
     if (m_hTextWnd && focus==m_hTextWnd)
         m_bHasFocus = 1;
+
+    if (m_bEnablePresetStartup) 
+        if (StartupPresetLoaded == false)
+        {
+            LoadPreset(m_szPresetStartup, 0.0f);
+            StartupPresetLoaded = true;
+        }
 
     if (GetFocus()==NULL)
         m_bHasFocus = 0;
@@ -5612,6 +5687,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         PrevPreset(0);
 
     return 0;
+
     case WM_KEYDOWN:    // virtual-key codes
 
         // Note that some keys will never reach this point, since they are
@@ -5745,70 +5821,66 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         //        SetWindowText(hWnd, PresetInfoWindowUpdater);
         //        wsprintfW(m_szSongTitle, L"Show Preset Name on Window Title ON"); LaunchSongTitleAnim();
         //    }
-           // else
-           // {
-           //     SetWindowText(hWnd, "BeatDrop Music Visualizer");
-           //     wsprintfW(m_szSongTitle, L"Show Preset Name on Window Title OFF"); LaunchSongTitleAnim();
-           //}
-            //return 0;  //WIP: Show Preset Info on Window
+        // else
+        // {
+        //     SetWindowText(hWnd, "BeatDrop Music Visualizer");
+        //     wsprintfW(m_szSongTitle, L"Show Preset Name on Window Title OFF"); LaunchSongTitleAnim();
+        //}
+        //return 0;  //WIP: Show Preset Info on Window
+        //Abandoned!
+        //"no f4 is enough for me"
+        //          - Milkdrop2077 (a.k.a. serge000) on Twitter DMs
          
 
-        //case VK_F11:   //NOT WORKING
-        //{
-        //    HardcutMode++;
-        //    if (HardcutMode == 1)
-        //        {
-        //            m_bHardCutsDisabled = false;
-        //            wsprintfW(m_szSongTitle, L"Hardcut Mode: Normal"); LaunchSongTitleAnim();
-        //        }
-        //    if (HardcutMode == 2)
-        //    {
-        //        m_bHardCutsDisabled = true;
-        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend"); LaunchSongTitleAnim();
-        //    }
-        //    if (HardcutMode == 2) //WIP: Bass Blend
-        //    {
-        //        int upd = GetTime();
-        //        if (upd % 1 == 0) timetick += 0.1;
-        //        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
-        //        {
-        //            if ((double)mysound.imm_rel[0] > 1.8 && timetick >= 1)
-        //            {
-        //                if (m_nLoadingPreset == 0)
-        //                    NextPreset(0.95);
-        //                timetick = 0;
-        //            }
-        //        }
-        //    }
+        case VK_F11:   //Only changing the HardcutModes value!
+        //Functionalities are moved on void MyRenderFn()
+        {
+            HardcutMode++;
+            if (HardcutMode == 1)
+                {
+                    m_bHardCutsDisabled = false;
+                    wsprintfW(m_szSongTitle, L"Hardcut Mode: Normal"); LaunchSongTitleAnim();
+                }
+            if (HardcutMode == 2)
+            {
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend"); LaunchSongTitleAnim();
+            }
 
-        //    if (HardcutMode == 3)
-        //    {
-        //        m_bHardCutsDisabled = true;
-        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass"); LaunchSongTitleAnim();
-        //    }
-        //    if (HardcutMode == 3)
-        //    {
-        //    if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
-        //        if ((double)mysound.imm_rel[0] > 2)
-        //        {
-        //            if (m_nLoadingPreset == 0)
-        //                NextPreset(0.0f);
-        //        }
-        //    }
+            if (HardcutMode == 3)
+            {
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass"); LaunchSongTitleAnim();
+            }
+            if (HardcutMode == 4)
+            {
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: Treble"); LaunchSongTitleAnim();
+            }
+            if (HardcutMode == 5)
+            {
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: Treble Fast Blend"); LaunchSongTitleAnim();
+            }
+            if (HardcutMode == 6)
+            {
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend and Hard Cut Treble"); LaunchSongTitleAnim();
+            }
+            if (HardcutMode == 7)
+            {
+                HardcutMode = 0;
+                m_bHardCutsDisabled = true;
+                wsprintfW(m_szSongTitle, L"Hardcut Mode: OFF"); LaunchSongTitleAnim();
+            }
+        } 
 
-        //    if (HardcutMode == 4)
-        //    {
-        //        HardcutMode = 0;
-        //        m_bHardCutsDisabled = true;
-        //        wsprintfW(m_szSongTitle, L"Hardcut Mode: OFF"); LaunchSongTitleAnim();
-        //    }
-        //}   //WORK IN PROGRESS
-
-
+        //reenabling this feature soon. (This will be Shift+F9)
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
 		//		ReadCustomMessages();		// re-read custom messages
 		//	return 0; // we processed (or absorbed) the key
 		//case VK_F8:
+        
 		//	{
 		//		m_UI_mode = UI_CHANGEDIR;
 

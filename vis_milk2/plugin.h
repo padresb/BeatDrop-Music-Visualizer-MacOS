@@ -288,6 +288,8 @@ public:
 	bool OpenSender(unsigned int width, unsigned int height);
 	bool bSpoutChanged; // set to write config on exit
 	bool bSpoutOut; // Spout output on or off
+    bool bEnablePresetStartup;
+    bool StartupPresetLoaded = false;
 	unsigned int g_Width;
 	unsigned int g_Height;
 	HWND g_hwnd;
@@ -337,6 +339,7 @@ public:
         float		m_fTimeBetweenRandomCustomMsgs;
         int			m_nSongTitlesSpawned;
         int			m_nCustMsgsSpawned;
+        bool        m_bEnablePresetStartup;
 
         //bool		m_bAlways3D;
         //float       m_fStereoSep;
@@ -509,6 +512,7 @@ public:
         wchar_t		m_szMsgIniFile[MAX_PATH];
         wchar_t     m_szImgIniFile[MAX_PATH];
         wchar_t		m_szPresetDir[MAX_PATH];
+        wchar_t     m_szPresetStartup[MAX_PATH];
         float		m_fRandStart[4];
 
         // DIRECTX 9:
