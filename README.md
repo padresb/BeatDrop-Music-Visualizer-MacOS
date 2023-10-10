@@ -23,6 +23,7 @@ Features added:
 * New waveforms (from 8 to 15)
 * Transparency Mode
 * Spout Support (thanks @leadedge for helping me)
+* Hardcut Modes (F11 Hotkey)
 
 Features to be added:
 * Toggle 3D Support
