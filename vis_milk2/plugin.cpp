@@ -5873,7 +5873,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_bHardCutsDisabled = true;
                 wsprintfW(m_szSongTitle, L"Hardcut Mode: OFF"); LaunchSongTitleAnim();
             }
-        } 
+        }
+        return 0; // we processed (or absorbed) the key
 
         //reenabling this feature soon. (This will be Shift+F9)
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
