@@ -4151,7 +4151,17 @@ void CPlugin::MyRenderFn(int redraw)
                     NextPreset(0.0f);
             }
     }
-    if (HardcutMode == 5) //Treble Fast Blend
+    if (HardcutMode == 5) //Bass Fast Blend
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.5)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.4f);
+                timetick = 0;
+            }
+    }
+    if (HardcutMode == 6) //Treble Fast Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
             if ((double)mysound.imm_rel[2] > 1.75 && timetick >= 0.5)
@@ -4161,7 +4171,7 @@ void CPlugin::MyRenderFn(int redraw)
                 timetick = 0;
             }
     }
-    if (HardcutMode == 6) //Bass Blend and Hard Cut Treble
+    if (HardcutMode == 7) //Bass Blend and Hard Cut Treble
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
@@ -4176,6 +4186,19 @@ void CPlugin::MyRenderFn(int redraw)
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.0f);
                 timetick2 = 0;
+            }
+        }
+    }
+
+    if (HardcutMode == 8) //Rhythmic Hardcut
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if (((double)mysound.imm_rel[0] > 1.75 || (double)mysound.imm_rel[2] > 1.75) && timetick >= 0.23)
+            {
+                if (m_nLoadingPreset == 0)
+                    NextPreset(0.0f);
+                timetick = 0;
             }
         }
     }
@@ -5730,49 +5753,70 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 60;
                 m_max_fps_dm = 60;
                 m_max_fps_w = 60;
-                wsprintfW(m_szSongTitle, L"60 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"60 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 2)
             {
                 m_max_fps_fs = 90;
                 m_max_fps_dm = 90;
                 m_max_fps_w = 90;
-                wsprintfW(m_szSongTitle, L"90 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"90 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 3)
             {
                 m_max_fps_fs = 120;
                 m_max_fps_dm = 120;
                 m_max_fps_w = 120;
-                wsprintfW(m_szSongTitle, L"120 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"120 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 4)
             {
                 m_max_fps_fs = 144;
                 m_max_fps_dm = 144;
                 m_max_fps_w = 144;
-                wsprintfW(m_szSongTitle, L"144 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"144 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 5)
             {
                 m_max_fps_fs = 240;
                 m_max_fps_dm = 240;
                 m_max_fps_w = 240;
-                wsprintfW(m_szSongTitle, L"240 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"240 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 6)
             {
                 m_max_fps_fs = 360;
                 m_max_fps_dm = 360;
                 m_max_fps_w = 360;
-                wsprintfW(m_szSongTitle, L"360 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"360 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 7)
             {
                 m_max_fps_fs = 0;
                 m_max_fps_dm = 0;
                 m_max_fps_w = 0;
-                wsprintfW(m_szSongTitle, L"Unlimited fps!"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Unlimited fps!", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             else if (ToggleFPSNumPressed == 8)
             {
@@ -5780,7 +5824,10 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                 m_max_fps_fs = 30;
                 m_max_fps_dm = 30;
                 m_max_fps_w = 30;
-                wsprintfW(m_szSongTitle, L"30 fps"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"30 fps", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
         }
             return 0; // we processed (or absorbed) the key
@@ -5791,11 +5838,17 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			m_bAlwaysOnTop = !m_bAlwaysOnTop;
 			if (m_bAlwaysOnTop) {
 				ToggleAlwaysOnTop(hWnd);
-				wsprintfW(m_szSongTitle, L"Always On Top ON"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Always On Top ON", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
 			}
 			else { 
 				ToggleAlwaysOnTop(hWnd);
-				wsprintfW(m_szSongTitle, L"Always On Top OFF"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Always On Top OFF", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
 			}
 			 return 0;
         case VK_F12:
@@ -5803,12 +5856,18 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         if (TranspaMode)
             {
                 ToggleTransparency(hWnd);
-                wsprintfW(m_szSongTitle, L"Transparency Mode ON"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Transparency Mode ON", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
         else
             {
                 ToggleTransparency(hWnd);
-                wsprintfW(m_szSongTitle, L"Transparency Mode OFF"); LaunchSongTitleAnim();
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Transparency Mode OFF", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
         return 0;
         //case VK_F2:
@@ -5837,43 +5896,72 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         {
             HardcutMode++;
             if (HardcutMode == 1)
-                {
-                    m_bHardCutsDisabled = false;
-                    wsprintfW(m_szSongTitle, L"Hardcut Mode: Normal"); LaunchSongTitleAnim();
-                }
+            {
+                m_bHardCutsDisabled = false;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Normal", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+            }
             if (HardcutMode == 2)
             {
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Bass Blend", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
 
             if (HardcutMode == 3)
             {
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Bass", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 4)
             {
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: Treble"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Treble", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 5)
             {
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: Treble Fast Blend"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Bass Fast Blend", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 6)
             {
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: Bass Blend and Hard Cut Treble"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Treble Fast Blend", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 7)
             {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Bass Blend and Hardcut Treble", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+            }
+            if (HardcutMode == 8)
+            {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: Rhythmic Hardcut", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+            }
+            if (HardcutMode == 9)
+            {
                 HardcutMode = 0;
                 m_bHardCutsDisabled = true;
-                wsprintfW(m_szSongTitle, L"Hardcut Mode: OFF"); LaunchSongTitleAnim();
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hardcut Mode: OFF", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
-        } 
+        }
+        return 0; // we processed (or absorbed) the key
 
         //reenabling this feature soon. (This will be Shift+F9)
 		//	if (m_nNumericInputMode == NUMERIC_INPUT_MODE_CUST_MSG)
@@ -6655,17 +6743,17 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				bSpoutOut = !bSpoutOut;
 				if (bSpoutOut) {
 					// Start spout
-					lstrcpyW(m_szSavedSongTitle, m_szSongTitle);
-					wsprintfW(m_szSongTitle, L"Spout output enabled.");
-					LaunchSongTitleAnim();
-					lstrcpyW(m_szSongTitle, m_szSavedSongTitle);
+                    m_bHardCutsDisabled = false;
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Spout output enabled.", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
 				}
 				else {
 					// Stop Spout
-					lstrcpyW(m_szSavedSongTitle, m_szSongTitle);
-					wsprintfW(m_szSongTitle, L"Spout output disabled.");
-					LaunchSongTitleAnim();
-					lstrcpyW(m_szSongTitle, m_szSavedSongTitle);
+                    m_bHardCutsDisabled = false;
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Spout output disabled.", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
 				}
 				if (bInitialized) {
 					spoutsender.ReleaseDX9sender();
