@@ -4125,7 +4125,7 @@ void CPlugin::MyRenderFn(int redraw)
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 1)
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.98)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.95f);
@@ -4154,7 +4154,7 @@ void CPlugin::MyRenderFn(int redraw)
     if (HardcutMode == 5) //Bass Fast Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
-            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.5)
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.49)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.4f);
@@ -4164,7 +4164,7 @@ void CPlugin::MyRenderFn(int redraw)
     if (HardcutMode == 6) //Treble Fast Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
-            if ((double)mysound.imm_rel[2] > 1.75 && timetick >= 0.5)
+            if ((double)mysound.imm_rel[2] > 1.75 && timetick >= 0.49)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.4f);
@@ -4175,13 +4175,13 @@ void CPlugin::MyRenderFn(int redraw)
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.5)
+            if ((double)mysound.imm_rel[0] > 1.75 && timetick >= 0.48)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.24f);
                 timetick = 0;
             }
-            if ((double)mysound.imm_rel[2] > 1.75 && timetick2 >= 0.5)
+            if ((double)mysound.imm_rel[2] > 1.75 && timetick2 >= 0.48)
             {
                 if (m_nLoadingPreset == 0)
                     NextPreset(0.0f);
