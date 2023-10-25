@@ -665,7 +665,7 @@ shapecode_15_border_g=1.000
 shapecode_15_border_b=1.000
 shapecode_15_border_a=0.100
 per_frame_1=wave_r = 1;
-per_frame_2=wave_g = bass_att/3.7;
+per_frame_2=wave_g = bass_att/2;
 per_frame_3=wave_b = 0;
 per_frame_4=rot=.140*sin(time);
 warp_1=`shader_body
