@@ -4,7 +4,7 @@
 
 # BeatDrop Music Visualizer
 
-One visualization standalone, one improvement.
+One standalone visualization, one improvement.
 In this repo will fix the bug, adding new features and more stuff to BeatDrop Music Visualizer.
 - This is a continued development because the original developer, Maxim Volskiy (@mvsoft74) has gone silent.
 
