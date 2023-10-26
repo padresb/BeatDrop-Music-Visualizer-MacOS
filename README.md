@@ -42,6 +42,14 @@ Before compiling the code:
 Please download and install [DirectX End-User Runtime Web](https://www.microsoft.com/en-us/download/details.aspx?id=35) first.
 BeatDrop now has a Spout integration! Download Spout: https://spout.zeal.co
 
+# Featured Websites:
+
+[![Logo](https://upload.wikimedia.org/wikipedia/commons/f/f4/Softpedia_logo.svg)](https://www.softpedia.com/get/Multimedia/Audio/Other-AUDIO-Tools/BeatDrop-Music-Visualizer.shtml)
+
+[![Logo](https://alternativeto.net/static/icons/a2/org-icon.png)](https://alternativeto.net/software/beatdrop/about/)
+
+[The Audio File](https://audio-file.org/2023/10/13/beatdrop-music-visualizer/)
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 BeatDrop is a stand-alone implementation of the amazing Milkdrop2 Winamp plug-in.
