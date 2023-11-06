@@ -119,6 +119,10 @@
 #include <math.h>
 #include <dwmapi.h>
 
+#include <ShellScalingApi.h> // for dpi awareness
+#pragma comment(lib, "shcore.lib") // for dpi awareness
+// older Windows versions: Entry Point Not Found Fix
+
 #include "plugin.h"
 #include "resource.h"
 #include "pluginshell.h"
@@ -503,8 +507,8 @@ unsigned __stdcall CreateWindowAndRun(void* data) {
 
 	// SPOUT
 	// Set Per Monitor awareness
-	// SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); //older Windows versions: Entry Point Not Found Fix
+	// SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 
 	// Register the windows class
 	WNDCLASSW wndClass;
