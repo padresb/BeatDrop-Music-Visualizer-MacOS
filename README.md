@@ -50,6 +50,8 @@ BeatDrop now has a Spout integration! Download Spout: https://spout.zeal.co
 
 [The Audio File](https://audio-file.org/2023/10/13/beatdrop-music-visualizer/)
 
+[Spout Open-Source Projects](https://leadedge.github.io/spout-projects.html#OfficialIncubo)
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 BeatDrop is a stand-alone implementation of the amazing Milkdrop2 Winamp plug-in.
