@@ -80,7 +80,9 @@ Use BeatDrop with your favourite
   ...
 
 ## System Requirements
-* Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista, Windows XP, Windows ME, Windows 98, Windows 95
+* Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista, Windows XP, Windows ME (not tested), Windows 98 (not tested), Windows 95 (not tested)
+
+* System Type Supported: 64-bit. Making supportable for 32-bit computers soon.
 
 * WASAPI-compatible sound card
 
