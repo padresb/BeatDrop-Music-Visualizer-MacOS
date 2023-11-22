@@ -9334,19 +9334,19 @@ for (int i=0;i<576;i++)
 	{
 		//note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
         int start = MY_FFT_SAMPLES*i/194;
-        int end = MY_FFT_SAMPLES*(i+1)/190;
+        int end = MY_FFT_SAMPLES*(i+1)/194; //bass: below 20hz-250hz
 		int j;
 
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 68;
-            end = MY_FFT_SAMPLES * (i + 1) / 32;
+            end = MY_FFT_SAMPLES * (i + 1) / 32; //mid: 250hz-4000hz
         }
 
         if (i == 2)
         {
             start = MY_FFT_SAMPLES*i/8;
-            end = MY_FFT_SAMPLES*(i + 1)/3;
+            end = MY_FFT_SAMPLES*(i + 1)/3; //treb: 4000hz-20000hz
         }
 		mysound.imm[i] = 0;
 
