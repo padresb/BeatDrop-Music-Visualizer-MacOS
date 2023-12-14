@@ -164,6 +164,7 @@ static LONG lastWindowStyleEx = 0;
 
 static bool fullscreen = false;
 static bool stretch = false;
+static bool borderless = false;
 static RECT lastRect = { 0 };
 
 static HMODULE module = nullptr;
@@ -301,6 +302,8 @@ void ToggleStretch(HWND hwnd) {
     else {
         ShowCursor(TRUE);
 
+        int x = lastRect.left;
+        int y = lastRect.top;
         int width = lastRect.right - lastRect.left;
         int height = lastRect.bottom - lastRect.top;
 
@@ -308,13 +311,18 @@ void ToggleStretch(HWND hwnd) {
         d3dPp.BackBufferHeight = height;
 
         pD3DDevice->Reset(&d3dPp);
+        SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
         stretch = false;
 
         SetWindowLongW(hwnd, GWL_STYLE, lastWindowStyle);
         SetWindowLongW(hwnd, GWL_EXSTYLE, lastWindowStyleEx);
         SetWindowPos(hwnd, HWND_NOTOPMOST, lastRect.left, lastRect.top, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
-        SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+        if (borderless)
+        {
+            SetWindowLongW(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+            SetWindowPos(hwnd, HWND_TOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+        }
     }
     fullscreen = false;
 }
@@ -354,6 +362,8 @@ void ToggleFullScreen(HWND hwnd) {
     else {
         ShowCursor(TRUE);
 
+        int x = lastRect.left;
+        int y = lastRect.top;
         int width = lastRect.right - lastRect.left;
         int height = lastRect.bottom - lastRect.top;
 
@@ -361,15 +371,49 @@ void ToggleFullScreen(HWND hwnd) {
         d3dPp.BackBufferHeight = height;
 
         pD3DDevice->Reset(&d3dPp);
+        SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
         fullscreen = false;
 
         SetWindowLongW(hwnd, GWL_STYLE, lastWindowStyle);
         SetWindowLongW(hwnd, GWL_EXSTYLE, lastWindowStyleEx);
         SetWindowPos(hwnd, HWND_NOTOPMOST, lastRect.left, lastRect.top, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
-        SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+        if (borderless)
+        {
+            SetWindowLongW(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+            SetWindowPos(hwnd, HWND_TOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+        }
     }
     stretch = false;
+}
+
+void ToggleBorderlessWindow(HWND hwnd)
+{
+    if (!borderless)
+    {
+        RECT rect;
+        GetWindowRect(hwnd, &rect);
+        int x = rect.left;
+        int y = rect.top;
+        int width = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
+
+        SetWindowLongW(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+        SetWindowPos(hwnd, HWND_TOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+        borderless = true;
+    }
+    else {
+        RECT rect;
+        GetWindowRect(hwnd, &rect);
+        int x = rect.left;
+        int y = rect.top;
+        int width = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
+
+        SetWindowLongW(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+        SetWindowPos(hwnd, HWND_NOTOPMOST, x, y, width, height, SWP_DRAWFRAME | SWP_FRAMECHANGED);
+        borderless = false;
+    }
 }
 
 LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -427,7 +471,59 @@ LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
             }*/
             g_plugin.PluginShellWindowProc(hWnd, uMsg, wParam, lParam);
         }
+        if (wParam == VK_F2)
+        {
+            if (!fullscreen && !stretch)
+            ToggleBorderlessWindow(hWnd);
+        }
         break;
+
+        case WM_NCHITTEST: //used for borderless window
+        {
+            if (borderless)
+                if (!fullscreen && !stretch)
+            {
+                //resizable borderless
+                //from https://stackoverflow.com/questions/19106047/winapi-c-reprogramming-window-resize
+                    #define BORDERWIDTH  10
+                    #define TITLEBARWIDTH  30
+                    RECT rect;
+                    int x, y;
+                    GetWindowRect(hWnd, &rect);
+
+                    x = GET_X_LPARAM(lParam) - rect.left;
+                    y = GET_Y_LPARAM(lParam) - rect.top;
+
+                    if (x >= BORDERWIDTH && x <= rect.right - rect.left - BORDERWIDTH && y >= BORDERWIDTH && y <= TITLEBARWIDTH)
+                        return HTCAPTION;
+
+                    else if (x < BORDERWIDTH && y < BORDERWIDTH)
+                        return HTTOPLEFT;
+                    else if (x > rect.right - rect.left - BORDERWIDTH && y < BORDERWIDTH)
+                        return HTTOPRIGHT;
+                    else if (x > rect.right - rect.left - BORDERWIDTH && y > rect.bottom - rect.top - BORDERWIDTH)
+                        return HTBOTTOMRIGHT;
+                    else if (x < BORDERWIDTH && y > rect.bottom - rect.top - BORDERWIDTH)
+                        return HTBOTTOMLEFT;
+
+                    else if (x < BORDERWIDTH)
+                        return HTLEFT;
+                    else if (y < BORDERWIDTH)
+                        return HTTOP;
+                    else if (x > rect.right - rect.left - BORDERWIDTH)
+                        return HTRIGHT;
+                    else if (y > rect.bottom - rect.top - BORDERWIDTH)
+                        return HTBOTTOM;
+                return HTCAPTION;
+            case WM_NCLBUTTONDBLCLK:
+            {
+            if (borderless)
+                 ToggleFullScreen(hWnd);
+                 break;
+            }
+        }
+            break;
+        }
 
         case WM_SYSKEYDOWN: {
 
@@ -450,7 +546,9 @@ LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
         case WM_LBUTTONDBLCLK:
         {
             ToggleFullScreen(hWnd);
+            break;
         }
+
 
         default:
             return g_plugin.PluginShellWindowProc(hWnd, uMsg, wParam, lParam);

@@ -632,8 +632,12 @@ int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
 int HardcutMode = 0;
 float timetick = 0;
 float timetick2 = 0;
+int beatcount;
 bool TranspaMode = false;
-bool ShowPresetOnTitle = 0;
+int OpacityControl = 10;                 // Default is 100% window opacity.
+int NumTotalPresetsLoaded = 0;
+//bool ShowPresetOnTitle = 0;
+
 void NSEEL_HOSTSTUB_EnterMutex(){}
 void NSEEL_HOSTSTUB_LeaveMutex(){}
 
@@ -1006,9 +1010,9 @@ void CPlugin::OverrideDefaults()
     // m_start_fullscreen      = 0;       // 0 or 1
     // m_start_desktop         = 0;       // 0 or 1
     // m_fake_fullscreen_mode  = 0;       // 0 or 1
-    m_max_fps_fs            = 0;      // 1-120, or 0 for 'unlimited'
-    m_max_fps_dm            = 0;      // 1-120, or 0 for 'unlimited'
-    m_max_fps_w             = 0;      // 1-120, or 0 for 'unlimited'
+    //m_max_fps_fs            = 0;      // 1-120, or 0 for 'unlimited'
+    //m_max_fps_dm            = 0;      // 1-120, or 0 for 'unlimited'
+    //m_max_fps_w             = 0;      // 1-120, or 0 for 'unlimited'
     // m_show_press_f1_msg     = 1;       // 0 or 1
     m_allow_page_tearing_w  = 0;       // 0 or 1
     // m_allow_page_tearing_fs = 0;       // 0 or 1
@@ -1352,13 +1356,13 @@ void CPlugin::MyReadConfig()
 	m_bPreventScollLockHandling = GetPrivateProfileBoolW(L"settings",L"m_bPreventScollLockHandling",m_bPreventScollLockHandling,pIni);
 
     m_nCanvasStretch = 100;  //GetPrivateProfileIntW(L"settings",L"nCanvasStretch"    ,m_nCanvasStretch,pIni);
-	m_nTexSizeX		= -1;  //GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni);
-	m_nTexSizeY		= -1;  //m_nTexSizeX;
+    m_nTexSizeX = -1; //GetPrivateProfileIntW(L"settings",L"nTexSize"    ,m_nTexSizeX   ,pIni);
+    m_nTexSizeY = -1; //m_nTexSizeX;
 	m_bTexSizeWasAutoPow2   = (m_nTexSizeX == -2);
 	m_bTexSizeWasAutoExact = (m_nTexSizeX == -1);
 	m_nTexBitsPerCh = GetPrivateProfileIntW(L"settings", L"nTexBitsPerCh", m_nTexBitsPerCh, pIni);
-	m_nGridX		= 64;  //GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni);
-	m_nGridY        = 48;  //m_nGridX*3/4;
+	m_nGridX		= GetPrivateProfileIntW(L"settings",L"nMeshSize"   ,m_nGridX      ,pIni);
+	m_nGridY        = m_nGridX*3/4;
 
     m_nMaxPSVersion_ConfigPanel = GetPrivateProfileIntW(L"settings",L"MaxPSVersion",m_nMaxPSVersion_ConfigPanel,pIni);
     m_nMaxImages    = GetPrivateProfileIntW(L"settings",L"MaxImages",m_nMaxImages,pIni);
@@ -1459,7 +1463,7 @@ void CPlugin::MyWriteConfig()
     WritePrivateProfileIntW(m_bEnablePresetStartup,L"bEnablePresetStartup",pIni,L"settings");
 
     WritePrivateProfileIntW(m_nCanvasStretch,        L"nCanvasStretch",   	pIni, L"settings");
-    WritePrivateProfileIntW(m_nTexSizeX,			    L"nTexSize",				pIni, L"settings");
+    //WritePrivateProfileIntW(m_nTexSizeX,			    L"nTexSize",				pIni, L"settings");
 	WritePrivateProfileIntW(m_nTexBitsPerCh,         L"nTexBitsPerCh",        pIni, L"settings");
 	WritePrivateProfileIntW(m_nGridX, 				L"nMeshSize",			pIni, L"settings");
 	WritePrivateProfileIntW(m_nMaxPSVersion_ConfigPanel, L"MaxPSVersion",  	pIni, L"settings");
@@ -2553,7 +2557,10 @@ int CPlugin::AllocateMyDX9Stuff()
     if (!m_bInitialPresetSelected)
     {
 		UpdatePresetList(true); //...just does its initial burst!
-        LoadRandomPreset(0.0f);
+        if (m_bEnablePresetStartup)
+            LoadPreset(m_szPresetStartup, 0.0f);
+        else
+            LoadRandomPreset(0.0f);
         m_bInitialPresetSelected = true;
     }
     else
@@ -4211,6 +4218,78 @@ void CPlugin::MyRenderFn(int redraw)
             }
         }
     }
+
+    if (HardcutMode == 10) //2 beats
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            {
+                beatcount++;
+                if (beatcount % 2 == 0)
+                {
+                    if (m_nLoadingPreset == 0)
+                        NextPreset(0.0f);
+                }
+                timetick = 0;
+            }
+        }
+        if (timetick >= 1)
+            beatcount = -1;
+    }
+
+    if (HardcutMode == 11) //4 beats
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            {
+                beatcount++;
+                if (beatcount % 4 == 0)
+                {
+                    if (m_nLoadingPreset == 0)
+                        NextPreset(0.0f);
+                }
+                timetick = 0;
+            }
+        }
+        if (timetick >= 1)
+            beatcount = -1;
+    }
+
+    if (HardcutMode == 12) //Kinetronix (Vizikord) -- Probably we need BPM algorithm for getting in sync
+    {
+        if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
+        {
+            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            {
+                beatcount++;
+                if (beatcount % 2 == 0)
+                {
+                    if (m_nLoadingPreset == 0)
+                        NextPreset(0.0f);
+                }
+                else
+                {
+                    if (m_nLoadingPreset == 0)
+                        PrevPreset(0.0f);
+                }
+
+                if (beatcount % 32 == 0)
+                {
+                    {
+                        if (m_nLoadingPreset == 0)
+                            NextPreset(0.0f);
+                        if (m_nLoadingPreset == 0)
+                            NextPreset(0.0f);
+                    }
+                } //Double the Next Preset (basically a trick to load 2 presets at the same time)
+                timetick = 0;
+            }
+        }
+        if (timetick >= 1)
+            beatcount = -1;
+    }
     //END
 
     m_bHasFocus = false;
@@ -4226,12 +4305,12 @@ void CPlugin::MyRenderFn(int redraw)
     if (m_hTextWnd && focus==m_hTextWnd)
         m_bHasFocus = 1;
 
-    if (m_bEnablePresetStartup) 
-        if (StartupPresetLoaded == false)
-        {
-            LoadPreset(m_szPresetStartup, 0.0f);
-            StartupPresetLoaded = true;
-        }
+    //if (m_bEnablePresetStartup) 
+    //    if (StartupPresetLoaded == false)
+    //    {
+    //        LoadPreset(m_szPresetStartup, 0.0f);
+    //        StartupPresetLoaded = true;
+    //    }  //The Preset Startup Implementation are reworked and moved to line 2560.
 
     if (GetFocus()==NULL)
         m_bHasFocus = 0;
@@ -4447,6 +4526,8 @@ void CPlugin::MyRenderUI(
                 L"%s Previous preset: %s ",
                 (m_bPresetLockedByUser || m_bPresetLockedByCode) ? L"" : L"",
                 (m_nLoadingPreset != 0) ? m_pState->m_szDesc : m_pOldState->m_szDesc);
+            MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
+            swprintf(buf, L" %s: %0.0f ", L"Total presets loaded", (float)(NumTotalPresetsLoaded));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -5451,6 +5532,71 @@ void ToggleTransparency(HWND hwnd)
     }
 }
 
+void ToggleWindowOpacity(HWND hwnd)
+{
+    RECT rect;
+    GetWindowRect(hwnd, &rect);
+    int x = rect.left;
+    int y = rect.top;
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+
+    if (OpacityControl >= 11)
+        OpacityControl = 10;
+    else if (OpacityControl == 10)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, LWA_ALPHA);
+    }
+    else if (OpacityControl == 9)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 230, LWA_ALPHA);
+    }
+    else if (OpacityControl == 8)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 205, LWA_ALPHA);
+    }
+    else if (OpacityControl == 7)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 179, LWA_ALPHA);
+    }
+    else if (OpacityControl == 6)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 154, LWA_ALPHA);
+    }
+    else if (OpacityControl == 5)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 128, LWA_ALPHA);
+    }
+    else if (OpacityControl == 4)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 102, LWA_ALPHA);
+    }
+    else if (OpacityControl == 3)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 77, LWA_ALPHA);
+    }
+    else if (OpacityControl == 2)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 51, LWA_ALPHA);
+    }
+    else if (OpacityControl == 1)
+    {
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 26, LWA_ALPHA);
+    }
+    else if (OpacityControl <= 0)
+        OpacityControl = 1;
+}
+
 //----------------------------------------------------------------------
 
 LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
@@ -5747,14 +5893,15 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 
+
 		switch(wParam)
 		{
 		//case VK_F9:
-            //m_bShowSongTitle = !m_bShowSongTitle; // we processed (or absorbed) the key
+        	//m_bShowSongTitle = !m_bShowSongTitle; // we processed (or absorbed) the key
 			//m_bShowSongTime = !m_bShowSongTime;
 			//m_bShowSongLen  = !m_bShowSongLen;
-		   // m_bShowPresetInfo = !m_bShowPresetInfo; //I didn't need this.
-            return 0; // we processed (or absorbed) the key
+			//m_bShowPresetInfo = !m_bShowPresetInfo; //I didn't need this.
+        //return 0; // we processed (or absorbed) the key
 		case VK_F3: {
             ToggleFPSNumPressed++;
             if (ToggleFPSNumPressed == 1)
@@ -5896,14 +6043,14 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             {
                 m_bHardCutsDisabled = false;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Normal", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Normal", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 2)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass Blend", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Bass Blend", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
 
@@ -5911,57 +6058,81 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Bass", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 4)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Middle", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Middle", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 5)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Treble", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Treble", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 6)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass Fast Blend", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Bass Fast Blend", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 7)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Treble Fast Blend", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Treble Fast Blend", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 8)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Bass Blend and Hardcut Treble", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Bass Blend and Hardcut Treble", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 9)
             {
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: Rhythmic Hardcut", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: Rhythmic Hardcut", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
             if (HardcutMode == 10)
             {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hard cut Mode: 2 beats", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+                beatcount = -1;
+            }
+            if (HardcutMode == 11)
+            {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hard cut Mode: 4 beats", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+                beatcount = -1;
+            }
+            if (HardcutMode == 12)
+            {
+                m_bHardCutsDisabled = true;
+                wchar_t buf[1024], tmp[64];
+                swprintf(buf, L"Hard cut Mode: Kinetronix (Vizikord)", tmp, 64);
+                AddError(buf, 3.0f, ERR_NOTIFY, false);
+                beatcount = -1;
+            }
+            if (HardcutMode == 13)
+            {
                 HardcutMode = 0;
                 m_bHardCutsDisabled = true;
                 wchar_t buf[1024], tmp[64];
-                swprintf(buf, L"Hardcut Mode: OFF", tmp, 64);
+                swprintf(buf, L"Hard cut Mode: OFF", tmp, 64);
                 AddError(buf, 3.0f, ERR_NOTIFY, false);
             }
         }
@@ -6013,6 +6184,8 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
             // Default - fall through
 
         } // end switch(wParam)
+        //------------------------------------------
+        
 
 		// next handle the waitstring case (for string-editing),
 		//	then the menu navigation case,
@@ -6498,6 +6671,71 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
 				//lstrcpy(m_szLastPresetSelected, m_presets[m_nPresetListCurPos].szFilename.c_str());
 			}
+            else if (bShiftHeldDown)
+            {
+                OpacityControl++;
+                if (OpacityControl == 10)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 100%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 9)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 90%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 8)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 80%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 7)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 70%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 6)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 60%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 5)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 50%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 4)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 40%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 3)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 30%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 2)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 20%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 1)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 10%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                ToggleWindowOpacity(hWnd);
+            }
 			break;
 
 		case VK_DOWN:
@@ -6518,6 +6756,71 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 				// remember this preset's name so the next time they hit 'L' it jumps straight to it
 				//lstrcpy(m_szLastPresetSelected, m_presets[m_nPresetListCurPos].szFilename.c_str());
 			}
+            else if (bShiftHeldDown)
+            {
+                OpacityControl--;
+                if (OpacityControl == 10)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 100%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 9)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 90%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 8)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 80%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 7)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 70%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 6)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 60%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 5)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 50%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 4)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 40%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 3)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 30%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 2)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 20%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                else if (OpacityControl == 1)
+                {
+                    wchar_t buf[1024], tmp[64];
+                    swprintf(buf, L"Window Opacity: 10%%", tmp, 64);
+                    AddError(buf, 3.0f, ERR_NOTIFY, false);
+                }
+                ToggleWindowOpacity(hWnd);
+            }
 			break;
 
 		case VK_SPACE:
@@ -7637,8 +7940,8 @@ void CPlugin::RandomizeBlendPattern()
         return;
 
     // note: we now avoid constant uniform blend b/c it's half-speed for shader blending.
-    //       (both old & new shaders would have to run on every pixel...)
-    int mixtype = 1 + (rand()%3);//rand()%4;
+    //       (both old & new shaders would have to run on every pixel...)           reenabled due to further notice
+    int mixtype = 0 + (rand()%4);//rand()%4;
 
     if (mixtype==0)
     {
@@ -7867,7 +8170,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
         ZeroMemory(&m_shaders, sizeof(PShaderSet));
 
         LoadShaders(&m_shaders, m_pState, false);
-
+        NumTotalPresetsLoaded++;
         OnFinishedLoadingPreset();
     }
     else
@@ -7887,6 +8190,7 @@ void CPlugin::LoadPreset(const wchar_t *szPresetFilename, float fBlendTime)
 
         m_fLoadingPresetBlendTime = fBlendTime;
         lstrcpyW(m_szLoadingPreset, szPresetFilename);
+        NumTotalPresetsLoaded++;
     }
 }
 
@@ -9318,8 +9622,8 @@ void CPlugin::DoCustomSoundAnalysis()
     float fWaveRight[576];
 for (int i=0;i<576;i++)
     {
-        fWaveLeft[i] = m_sound.fWaveform[0][i];
-        fWaveRight[i] = m_sound.fWaveform[1][i];
+        fWaveLeft[i] = m_sound.fWaveform[0][i]; //left channel
+        fWaveRight[i] = m_sound.fWaveform[1][i]; //right channel
     }
 
 	memset(mysound.fSpecLeft, 0, sizeof(float)*MY_FFT_SAMPLES);
@@ -9334,20 +9638,25 @@ for (int i=0;i<576;i++)
 	{
 		//note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
         int start = MY_FFT_SAMPLES*i/194;
-        int end = MY_FFT_SAMPLES*(i+1)/190;
+        int end = MY_FFT_SAMPLES*(i+1)/190; // bass: 20hz-250hz
 		int j;
 
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 68;
-            end = MY_FFT_SAMPLES * (i + 1) / 32;
+            end = MY_FFT_SAMPLES * (i + 1) / 32; // mid: 250hz-4000hz
         }
 
         if (i == 2)
         {
             start = MY_FFT_SAMPLES*i/8;
-            end = MY_FFT_SAMPLES*(i + 1)/3;
-        }
+            end = MY_FFT_SAMPLES*(i + 1)/3; // treb: 4000hz-20000hz
+        } // new MD beat detection algorithm, clear, perfect, stable
+        
+      /*int start = MY_FFT_SAMPLES * i / 6;
+        int end = MY_FFT_SAMPLES * (i+1) / 6;
+        int j;*/ //old MD beat detection algorithm, not accurate, only reacts only at the quarter of middle and treble.
+
 		mysound.imm[i] = 0;
 
 		for (j=start; j<end; j++)
@@ -9375,7 +9684,7 @@ for (int i=0;i<576;i++)
 
 
 		// also get bass/mid/treble levels *relative to the past*
-		//changed all the values to 0 because it is a standalone program
+		//changed all the values to 0 instead of 1 when it's no music
 		if (fabsf(mysound.long_avg[i]) < 0.001f)
 			mysound.imm_rel[i] = 0.0f;
 		else

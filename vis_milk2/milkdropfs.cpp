@@ -1239,7 +1239,7 @@ void CPlugin::RenderFrame(int bRedraw)
 			//   Set the sender resolution in Milkdrop2PcmVisualizer.cpp (SpoutWidth/SpoutHeight)
 			//
 			spoutsender.SendDX9surface(back_buffer, true); // Variable size
-			// spoutsender.SendDX9surface(back_buffer, false); // Fixed size
+			//spoutsender.SendDX9surface(back_buffer, false); // Fixed size
 
 			back_buffer->Release();
 		}
@@ -4510,13 +4510,13 @@ void CPlugin::DrawUserSprites()	// from system memory, to back buffer.
 			    lpDevice->SetTexture(0, m_texmgr.m_tex[iSlot].pSurface);
 
 				// undo aspect ratio changes (that were used to fit it to VS1):
-				{
-					float aspect = GetWidth()/(float)(GetHeight()*4.0f/3.0f);
-					if (aspect < 1.0f)
-						for (k=0; k<4; k++) v3[k].x /= aspect;
-					else
-						for (k=0; k<4; k++) v3[k].y *= aspect;
-				}
+				//{
+				//	float aspect = GetWidth()/(float)(GetHeight()*4.0f/3.0f);
+				//	if (aspect < 1.0f)
+				//		for (k=0; k<4; k++) v3[k].x /= aspect;
+				//	else
+				//		for (k=0; k<4; k++) v3[k].y *= aspect; //disabled due to aspect-ratio issue - didn't work
+				//}
 
 			    lpDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (LPVOID)v3, sizeof(SPRITEVERTEX));
 			}
