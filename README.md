@@ -1,5 +1,7 @@
 ![Discord Shield](https://discord.com/api/guilds/1041603212798599168/widget.png?style=shield) [Chat with us on Discord!](https://discord.gg/rp5cBDtGuM)
 
+[![Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_of_Twitter.svg/20px-Logo_of_Twitter.svg.png)](https://twitter.com/BeatDropVis) [@BeatDropVis](https://twitter.com/BeatDropVis)
+
 ![Logo](https://github.com/OfficialIncubo/The-Improved-and-Modified-Version-of-BeatDrop-Music-Visualizer/raw/master/Logos/BeatDrop%20New%20Logo%20GitGub%20ver.png) (logo design by Incubo_)
 
 # BeatDrop Music Visualizer
@@ -80,7 +82,7 @@ Use BeatDrop with your favourite
   ...
 
 ## System Requirements
-* Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista, Windows XP, Windows ME, Windows 98, Windows 95
+* Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista
 
 * WASAPI-compatible sound card
 
