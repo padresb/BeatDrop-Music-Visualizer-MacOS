@@ -4223,7 +4223,7 @@ void CPlugin::MyRenderFn(int redraw)
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            if (((double)mysound.imm_rel[0] > 2 && timetick >= 0.20))
             {
                 beatcount++;
                 if (beatcount % 2 == 0)
@@ -4242,7 +4242,7 @@ void CPlugin::MyRenderFn(int redraw)
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            if (((double)mysound.imm_rel[0] > 2 && timetick >= 0.20))
             {
                 beatcount++;
                 if (beatcount % 4 == 0)
@@ -4261,7 +4261,7 @@ void CPlugin::MyRenderFn(int redraw)
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
-            if (((double)mysound.imm_rel[0] > 2.2 && timetick >= 0.20))
+            if (((double)mysound.imm_rel[0] > 2 && timetick >= 0.20))
             {
                 beatcount++;
                 if (beatcount % 2 == 0)
