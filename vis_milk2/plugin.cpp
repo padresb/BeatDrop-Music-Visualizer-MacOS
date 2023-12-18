@@ -9637,7 +9637,7 @@ for (int i=0;i<576;i++)
 	for (i=0; i<3; i++)
 	{
 		//note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-        int start = MY_FFT_SAMPLES*i/196;
+        int start = MY_FFT_SAMPLES*i/200;
         int end = MY_FFT_SAMPLES*(i+1)/142; // bass: 20hz-250hz
 		int j;
 
