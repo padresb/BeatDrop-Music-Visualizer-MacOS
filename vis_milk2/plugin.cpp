@@ -9657,6 +9657,7 @@ for (int i=0;i<576;i++)
         int end = MY_FFT_SAMPLES * (i+1) / 6;
         int j;*/ //old MD beat detection algorithm, not accurate, only reacts only at the quarter of middle and treble.
 		//it depends on the sample rate input in your computer, so possibly it's not reacting correctly. See fft.cpp
+		//The recommended sample rate input for the new beat detection code is 44000hz.
 
 		mysound.imm[i] = 0;
 
