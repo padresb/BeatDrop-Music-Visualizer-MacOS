@@ -9637,14 +9637,14 @@ for (int i=0;i<576;i++)
 	for (i=0; i<3; i++)
 	{
 		//note: only look at bottom half of spectrum!  (hence divide by 6 instead of 3)
-        int start = MY_FFT_SAMPLES*i/194;
-        int end = MY_FFT_SAMPLES*(i+1)/190; // bass: 20hz-250hz
+        int start = MY_FFT_SAMPLES*i/196;
+        int end = MY_FFT_SAMPLES*(i+1)/142; // bass: 20hz-250hz
 		int j;
 
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 68;
-            end = MY_FFT_SAMPLES * (i + 1) / 32; // mid: 250hz-4000hz
+            end = MY_FFT_SAMPLES * (i + 1) / 14; // mid: 250hz-4000hz
         }
 
         if (i == 2)
