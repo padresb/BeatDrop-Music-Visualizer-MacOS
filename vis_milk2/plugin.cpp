@@ -9644,7 +9644,7 @@ for (int i=0;i<576;i++)
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 68;
-            end = MY_FFT_SAMPLES * (i + 1) / 14; // mid: 250hz-4000hz
+            end = MY_FFT_SAMPLES * (i + 1) / 13; // mid: 250hz-4000hz
         }
 
         if (i == 2)
