@@ -289,7 +289,8 @@ public:
 	bool bSpoutChanged; // set to write config on exit
 	bool bSpoutOut; // Spout output on or off
     bool bEnablePresetStartup;
-    bool StartupPresetLoaded = false;
+    bool bAutoLockPresetWhenNoMusic;
+    //bool StartupPresetLoaded = false;
 	unsigned int g_Width;
 	unsigned int g_Height;
 	HWND g_hwnd;
@@ -340,6 +341,7 @@ public:
         int			m_nSongTitlesSpawned;
         int			m_nCustMsgsSpawned;
         bool        m_bEnablePresetStartup;
+        bool        m_bAutoLockPresetWhenNoMusic;
 
         //bool		m_bAlways3D;
         //float       m_fStereoSep;

@@ -325,6 +325,7 @@ bool spoutDX9::SetSenderName(const char* sendername)
 //---------------------------------------------------------
 // Function: SendDX9surface
 // Send DirectX9 surface using the surface format.
+//     bUpdate - update the sender size
 bool spoutDX9::SendDX9surface(IDirect3DSurface9* pSurface, bool bUpdate)
 {
 	// Quit if no data
@@ -337,6 +338,8 @@ bool spoutDX9::SendDX9surface(IDirect3DSurface9* pSurface, bool bUpdate)
 	pSurface->GetDesc(&desc);
 	if (desc.Width == 0 || desc.Height == 0)
 		return false;
+
+	desc.Format = D3DFMT_A8R8G8B8; //forces the BeatDrop's Spout Sender to ARGB format that easily fix the Spout Sender renderer (e.g. MD1 effects with only invert or only solarize enabled).
 
 	// Create or update the sender
 	if (bUpdate || !m_bSpoutInitialized) {

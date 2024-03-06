@@ -28,7 +28,7 @@ fWaveSmoothing=0.900
 fWaveParam=-0.100
 fModWaveAlphaStart=0.750
 fModWaveAlphaEnd=0.950
-fWarpAnimSpeed=1.000
+fWarpAnimSpeed=0.909
 fWarpScale=3.138
 fZoomExponent=1.00000
 fShader=0.000
@@ -709,7 +709,7 @@ per_frame_8=//Written by Incubo_
 per_frame_9=
 per_frame_10=//chance = if(equal(progress,0),rand(100),chance); //moved this variable to init code for better randomization every preset you loaded
 per_frame_11=luck = if(above(chance, 90), 1, 0); //first try
-per_frame_12=luck = if(above(chance, 95), 2, 0);
+per_frame_12=luck = if(above(chance, 95), 2, luck); //LUCK FIX: 17.02.2024 - The luck variable turns to 0 when the chance from 90 to 09.
 per_frame_13=q3 = luck;
 per_frame_14=monitor = chance;
 warp_1=`shader_body

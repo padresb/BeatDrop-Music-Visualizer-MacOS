@@ -623,6 +623,7 @@ SPOUT :
 #include <process.h>  // for beginthread, etc.
 #include <shellapi.h>
 #include <strsafe.h>
+#include <Windows.h>
 #include "AutoCharFn.h"
 
 #define FRAND ((rand() % 7381)/7380.0f)
@@ -632,10 +633,12 @@ int ToggleFPSNumPressed = 7;			// Default is Unlimited FPS.
 int HardcutMode = 0;
 float timetick = 0;
 float timetick2 = 0;
+float TimeToAutoLockPreset = 0;
 int beatcount;
 bool TranspaMode = false;
 int OpacityControl = 10;                 // Default is 100% window opacity.
 int NumTotalPresetsLoaded = 0;
+bool AutoLockedPreset = false;
 //bool ShowPresetOnTitle = 0;
 
 void NSEEL_HOSTSTUB_EnterMutex(){}
@@ -1328,6 +1331,7 @@ void CPlugin::MyReadConfig()
 	//m_bShowMenuToolTips = GetPrivateProfileBool("settings","bShowMenuToolTips",m_bShowMenuToolTips,pIni);
 	m_bSongTitleAnims   = GetPrivateProfileBoolW(L"settings",L"bSongTitleAnims",m_bSongTitleAnims,pIni);
     m_bEnablePresetStartup = GetPrivateProfileBoolW(L"settings", L"bEnablePresetStartup", m_bEnablePresetStartup, pIni);
+    m_bAutoLockPresetWhenNoMusic = GetPrivateProfileBoolW(L"settings", L"bAutoLockPresetWhenNoMusic", m_bAutoLockPresetWhenNoMusic, pIni);
 
 	m_bShowFPS			= GetPrivateProfileBoolW(L"settings",L"bShowFPS",       m_bShowFPS			,pIni);
 	m_bShowRating		= GetPrivateProfileBoolW(L"settings",L"bShowRating",    m_bShowRating		,pIni);
@@ -1461,6 +1465,7 @@ void CPlugin::MyWriteConfig()
 	WritePrivateProfileIntW(m_bPreventScollLockHandling,L"m_bPreventScollLockHandling",pIni,L"settings");
     // note: this is also written @ exit of the visualizer
     WritePrivateProfileIntW(m_bEnablePresetStartup,L"bEnablePresetStartup",pIni,L"settings");
+    WritePrivateProfileIntW(m_bAutoLockPresetWhenNoMusic, L"bAutoLockPresetWhenNoMusic", pIni, L"settings");
 
     WritePrivateProfileIntW(m_nCanvasStretch,        L"nCanvasStretch",   	pIni, L"settings");
     //WritePrivateProfileIntW(m_nTexSizeX,			    L"nTexSize",				pIni, L"settings");
@@ -1658,7 +1663,7 @@ void CPlugin::CleanUpMyNonDx9Stuff()
 
     DeleteCriticalSection(&g_cs);
 
-    CancelThread(0);
+    CancelThread(1000);
 
 	m_menuPreset  .Finish();
 	m_menuWave    .Finish();
@@ -4128,7 +4133,7 @@ void CPlugin::MyRenderFn(int redraw)
     timetick2 += 0.0177;
 
     //HardCut Modes (controlled via F11 hotkey)
-   if (HardcutMode == 2) //Bass Blend
+    if (HardcutMode == 2) //Bass Blend
     {
         if (GetFps() > 1.0f && !m_bPresetLockedByUser && !m_bPresetLockedByCode)
         {
@@ -4292,6 +4297,34 @@ void CPlugin::MyRenderFn(int redraw)
     }
     //END
 
+    //Auto-Lock Preset when it's silence.
+    if (m_bAutoLockPresetWhenNoMusic)
+    {
+        if (((double)mysound.imm_rel[0] + (double)mysound.imm_rel[1] + (double)mysound.imm_rel[2]) == 0)
+        {
+            if (TimeToAutoLockPreset <= 2.5)
+                TimeToAutoLockPreset += 0.0177;
+            else
+            {
+                if (!AutoLockedPreset)
+                {
+                    m_bPresetLockedByUser = true;
+                    AutoLockedPreset = true;
+                }
+            }
+        }
+
+        else if (((double)mysound.imm_rel[0] + (double)mysound.imm_rel[1] + (double)mysound.imm_rel[2]) != 0)
+        {
+            if (AutoLockedPreset)
+            {
+                m_bPresetLockedByUser = false;
+                AutoLockedPreset = false;
+            }
+            TimeToAutoLockPreset = 0;
+        }
+    }
+    //END
     m_bHasFocus = false;
     do
     {
@@ -4523,7 +4556,7 @@ void CPlugin::MyRenderUI(
             SelectFont(SIMPLE_FONT);
             swprintf(
                 buf,
-                L"%s Previous preset: %s ",
+                L"%s Preset used: %s ",
                 (m_bPresetLockedByUser || m_bPresetLockedByCode) ? L"" : L"",
                 (m_nLoadingPreset != 0) ? m_pState->m_szDesc : m_pOldState->m_szDesc);
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
@@ -4555,11 +4588,11 @@ void CPlugin::MyRenderUI(
             SelectFont(SIMPLE_FONT);
 			swprintf(buf, L" %s: %6.4f ", wasabiApiLangString(IDS_PF_MONITOR), (float)(*m_pState->var_pf_monitor));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L"%s %s: %6.4f ",((double)mysound.imm_rel[0] >= 1.3) ? L"+" : L" ", L"bass: ", (float)(*m_pState->var_pf_bass));
+                swprintf(buf, L"%s %s %6.4f ",((double)mysound.imm_rel[0] >= 1.3) ? L"+" : L" ", L"bass:", (float)(*m_pState->var_pf_bass));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L"%s %s: %6.4f ", ((double)mysound.imm_rel[1] >= 1.3) ? L"+" : L" ", L"mid: ", (float)(*m_pState->var_pf_mid));
+                swprintf(buf, L"%s %s %6.4f ", ((double)mysound.imm_rel[1] >= 1.3) ? L"+" : L" ", L"mid:", (float)(*m_pState->var_pf_mid));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
-                swprintf(buf, L"%s %s: %6.4f ", ((double)mysound.imm_rel[2] >= 1.3) ? L"+" : L" ", L"treb: ", (float)(*m_pState->var_pf_treb));
+                swprintf(buf, L"%s %s %6.4f ", ((double)mysound.imm_rel[2] >= 1.3) ? L"+" : L" ", L"treb:", (float)(*m_pState->var_pf_treb));
             MyTextOut_Shadow(buf, MTO_UPPER_RIGHT);
 		}
 
@@ -5088,7 +5121,7 @@ void CPlugin::MyRenderUI(
 			}
 			else
 			{
-                UpdatePresetList(); // make sure list is completely ready
+                UpdatePresetList(true); // make sure list is completely ready
 
                 // quick checks
                 for (int mash=0; mash<MASH_SLOTS; mash++)
@@ -5242,7 +5275,7 @@ void CPlugin::MyRenderUI(
                     //    GetFont(SIMPLE_FONT)->Begin();
 
                     rect = orig_rect;
-				    for (i=first_line; i<last_line; i++)
+				    for (i=first_line; i<last_line && m_presets[i].szFilename.c_str(); i++)
 				    {
 					    // remove the extension before displaying the filename.  also pad w/spaces.
 					    //lstrcpy(str, m_pPresetAddr[i]);
@@ -5400,7 +5433,7 @@ void CPlugin::MyRenderUI(
                     //    GetFont(SIMPLE_FONT)->Begin();
 
                     rect = orig_rect;
-				    for (i=first_line; i<last_line; i++)
+				    for (i=first_line; i<last_line && m_presets[i].szFilename.c_str(); i++)
 				    {
 					    // remove the extension before displaying the filename.  also pad w/spaces.
 					    //lstrcpy(str, m_pPresetAddr[i]);
@@ -5523,7 +5556,9 @@ void ToggleTransparency(HWND hwnd)
     if (TranspaMode)
     {
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
-        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, ULW_COLORKEY | LWA_ALPHA);
+        //SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, ULW_COLORKEY | LWA_ALPHA);
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 255, LWA_COLORKEY);
+        OpacityControl = 10; //Reverts the window opacity back to 100%
     }
     else
     {
@@ -5552,6 +5587,7 @@ void ToggleWindowOpacity(HWND hwnd)
     {
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
         SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 230, LWA_ALPHA);
+        TranspaMode = false; //Automatically turns off the transparency mode when you are toggling the window opacity!
     }
     else if (OpacityControl == 8)
     {
@@ -5597,6 +5633,52 @@ void ToggleWindowOpacity(HWND hwnd)
         OpacityControl = 1;
 }
 
+void LoadPresetFilesViaDragAndDrop(WPARAM wParam)
+{
+
+    #ifdef UNICODE
+        TCHAR szDroppedPresetName[MAX_PATH]; // Unicode string
+    #else
+        TCHAR szDroppedPresetName[MAX_PATH]; // ANSI string
+    #endif
+
+    //TCHAR szDroppedPresetName[MAX_PATH];
+    HDROP hDrop = (HDROP)wParam;
+
+    int count = DragQueryFile(hDrop, 0xFFFFFFFF, szDroppedPresetName, 0);
+
+    //int len = MultiByteToWideChar(MB_PRECOMPOSED, 0, szDroppedPresetName, -1, NULL, 0);
+    //wchar_t* wConvertedDroppedPresetName = new wchar_t[len];
+    //MultiByteToWideChar(MB_PRECOMPOSED, 0, szDroppedPresetName, -1, wConvertedDroppedPresetName, len);
+    //int len2 = lstrlenW(wConvertedDroppedPresetName);
+
+    for (int i = 0; i < count; i++)
+    {
+        DragQueryFile(hDrop, i, szDroppedPresetName, MAX_PATH);
+    }
+
+    //ChatGPT
+    #ifdef UNICODE
+        // No conversion needed for Unicode build
+        const wchar_t* convertedFileName = szDroppedPresetName;
+    #else
+    // Convert ANSI string to Unicode
+        wchar_t convertedFileName[MAX_PATH];
+        MultiByteToWideChar(CP_ACP, 0, szDroppedPresetName, -1, convertedFileName, MAX_PATH);
+    #endif
+
+    //if (MAX_PATH < 5 || wcsicmp(convertedFileName + MAX_PATH - 5, L".milk") != 0)
+    std::string GetFilename = szDroppedPresetName;
+    if (GetFilename.substr(GetFilename.find_last_of(".") + 1) == "milk") //from https://stackoverflow.com/a/51999
+        g_plugin.LoadPreset(convertedFileName, 0.0f);
+    else
+    {
+        wchar_t buf[1024], tmp[128];
+        swprintf(buf, L"Error: Failed to load dropped preset file: %s", convertedFileName, tmp, 128);
+        g_plugin.AddError(buf, 5.0f, ERR_NOTIFY, true);
+    }
+    DragFinish(hDrop);
+}
 //----------------------------------------------------------------------
 
 LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lParam)
@@ -5865,6 +5947,14 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
         PrevPreset(0);
 
     return 0;
+    
+     case WM_CREATE:
+         DragAcceptFiles(hWnd, TRUE);
+     return 0;
+
+     case WM_DROPFILES:
+         LoadPresetFilesViaDragAndDrop(wParam);
+     return 0;
 
     case WM_KEYDOWN:    // virtual-key codes
 
@@ -6501,7 +6591,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
                         if (GetFileAttributesW(g_plugin.m_szPresetDir) == -1)
                             bSuccess = false;
                         if (bSuccess) {
-    						UpdatePresetList(false,true,false);
+    						UpdatePresetList(true,true,false);
                             bSuccess = (m_nPresets > 0);
                         }
 
@@ -7005,7 +7095,7 @@ LRESULT CPlugin::MyWindowProc(HWND hWnd, unsigned uMsg, WPARAM wParam, LPARAM lP
 
 					WritePrivateProfileStringW(L"settings",L"szPresetDir",GetPresetDir(),GetConfigIniFile());
 
-					UpdatePresetList(false, true, false);
+					UpdatePresetList(true, true, false);
 
 					// set current preset index to -1 because current preset is no longer in the list
 					m_nCurrentPreset = -1;
@@ -7453,7 +7543,7 @@ int CPlugin::HandleRegularKey(WPARAM wParam)
 			m_UI_mode == UI_REGULAR ||
 			m_UI_mode == UI_MENU)
 		{
-            UpdatePresetList(); // make sure list is completely ready
+            UpdatePresetList(true); // make sure list is completely ready
 			m_UI_mode = UI_LOAD;
 			m_bUserPagedUp = false;
 			m_bUserPagedDown = false;
@@ -8539,9 +8629,13 @@ retry:
 	        EnterCriticalSection(&g_cs);
 
             //g_plugin.m_presets  = temp_presets;
-            for (int i=g_plugin.m_nPresets; i<temp_nPresets; i++)
-                g_plugin.m_presets.push_back(temp_presets[i]);
-            g_plugin.m_nPresets = temp_nPresets;
+            int curPreset = g_plugin.m_nPresets;
+            while (!g_bThreadShouldQuit && curPreset < temp_nPresets)
+            {
+                g_plugin.m_presets.push_back(temp_presets[curPreset]);
+                curPreset++;
+            }
+            g_plugin.m_nPresets = curPreset;
             g_plugin.m_nDirs    = temp_nDirs;
 
             LeaveCriticalSection(&g_cs);
@@ -9068,7 +9162,7 @@ void CPlugin::SavePresetAs(wchar_t *szNewFile)
 		lstrcpyW(m_pState->m_szDesc, m_waitstring.szText);
 
 		// refresh file listing
-		UpdatePresetList(false,true);
+		UpdatePresetList(true,true);
 	}
 }
 
@@ -9092,7 +9186,7 @@ void CPlugin::DeletePresetFile(wchar_t *szDelFile)
 
 		// refresh file listing & re-select the next file after the one deleted
         int newPos = m_nPresetListCurPos;
-		UpdatePresetList(false,true);
+		UpdatePresetList(true,true);
         m_nPresetListCurPos = max(0, min(m_nPresets-1, newPos));
 	}
 }
@@ -9135,7 +9229,7 @@ void CPlugin::RenamePresetFile(wchar_t *szOldFile, wchar_t *szNewFile)
 			lstrcpyW(buf2, m_waitstring.szText);
 			lstrcatW(buf2, L".milk");
             m_presets[m_nPresetListCurPos].szFilename = buf2;
-			UpdatePresetList(false,true,false);
+			UpdatePresetList(true,true,false);
 
             // jump to (highlight) the new file:
             m_nPresetListCurPos = 0;
@@ -9644,7 +9738,7 @@ for (int i=0;i<576;i++)
         if (i == 1)
         {
             start = MY_FFT_SAMPLES * i / 68;
-            end = MY_FFT_SAMPLES * (i + 1) / 14; // mid: 250hz-4000hz
+            end = MY_FFT_SAMPLES * (i + 1) / 13; // mid: 250hz-4000hz
         }
 
         if (i == 2)
