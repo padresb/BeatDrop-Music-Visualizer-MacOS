@@ -84,6 +84,8 @@ Use BeatDrop with your favourite
 ## System Requirements
 * Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Vista
 
+* Minimum 2GB of RAM required
+
 * WASAPI-compatible sound card
 
 * DirectX 9 or higher - compatible GPU
