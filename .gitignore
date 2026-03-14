@@ -12,3 +12,5 @@ third_party/Syphon-Framework/
 **/*.db
 audio/*.bak
 vis_milk2/*.bak
+.DS_Store
+Library/
