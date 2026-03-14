@@ -34,7 +34,13 @@ out vec2 frag_TEXCOORD1;
 void main() {
     gl_Position = vertex_transformation * vec4(pos, 0.0, 1.0);
 
-    float zoom2 = pow(zoom, pow(zoomExp, radius * 2.0 - 1.0));
+    // Sign-preserving pow for negative zoom values. Some MilkDrop presets
+    // use negative zoom (e.g. -1.01) to create mirroring/inversion in the
+    // feedback loop. GLSL pow() is undefined for negative bases (it computes
+    // exp(y*log(x)) and log(negative) is NaN), but the original MilkDrop
+    // computed this on the CPU with C's powf() where pow(-1.01, 1.0) = -1.01.
+    float zoomExpVal = pow(zoomExp, radius * 2.0 - 1.0);
+    float zoom2 = sign(zoom) * pow(abs(zoom), zoomExpVal);
     float zoom2Inverse = 1.0 / zoom2;
 
     // Initial texture coordinates, with built-in zoom factor
