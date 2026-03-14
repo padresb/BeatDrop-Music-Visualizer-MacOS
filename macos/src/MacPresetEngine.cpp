@@ -252,12 +252,17 @@ struct MacPresetEngine::ProjectMRenderer {
             return;
         }
 
+        max_samples = projectm_pcm_get_max_samples();
+        const unsigned int clamped = static_cast<unsigned int>(std::min<std::size_t>(frame_count, max_samples));
+
         ScopedCurrentContext current(context);
         projectm_pcm_add_float(
             instance,
             interleaved_stereo_frames,
-            static_cast<unsigned int>(std::min<std::size_t>(frame_count, projectm_pcm_get_max_samples())),
+            clamped,
             PROJECTM_STEREO);
+        audio_frames_sent += clamped;
+        audio_calls += 1;
     }
 
     bool render_frame(double delta_seconds, std::vector<std::uint8_t>& pixels) {
@@ -563,6 +568,9 @@ struct MacPresetEngine::ProjectMRenderer {
     std::uint32_t publish_texture_height = 0;
     std::uint32_t configured_surface_width = 0;
     std::uint32_t configured_surface_height = 0;
+    std::size_t audio_frames_sent = 0;
+    std::size_t audio_calls = 0;
+    unsigned int max_samples = 0;
 };
 
 #endif
@@ -867,7 +875,10 @@ core::PresetEngineState MacPresetEngine::describe_state() const {
         if (!projectm_renderer_->runtime_version.empty()) {
             detail << " (" << projectm_renderer_->runtime_version << ")";
         }
-        detail << " with a " << latest_frame_width_ << "x" << latest_frame_height_ << " offscreen surface.";
+        detail << " with a " << latest_frame_width_ << "x" << latest_frame_height_ << " offscreen surface."
+               << " pM-audio: " << projectm_renderer_->audio_frames_sent
+               << " frames in " << projectm_renderer_->audio_calls
+               << " calls (max_samples=" << projectm_renderer_->max_samples << ").";
     } else {
         if (!backend_detail_.empty()) {
             detail << backend_detail_ << ' ';
