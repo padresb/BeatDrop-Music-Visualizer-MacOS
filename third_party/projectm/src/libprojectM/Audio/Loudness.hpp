@@ -20,14 +20,14 @@ class Loudness
 {
 public:
     /**
-     * @brief Frequency bands.
-     * Only the first half of the spectrum is used for these bands, each using one third of this half.
+     * @brief Frequency bands using logarithmic (octave-based) division.
+     * Matches the original MilkDrop band ranges: 20-200 Hz, 200-2000 Hz, 2000-20000 Hz.
      */
     enum class Band : int
     {
-        Bass = 0,    //!< Bass band (first sixth of the spectrum)
-        Middles = 1, //!< Middles band (second sixth of the spectrum)
-        Treble = 2   //!< Treble band (third sixth of the spectrum)
+        Bass = 0,    //!< Bass band (~20-200 Hz)
+        Middles = 1, //!< Middles band (~200-2000 Hz)
+        Treble = 2   //!< Treble band (~2000-20000 Hz)
     };
 
     /**

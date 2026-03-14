@@ -5,6 +5,43 @@
 namespace libprojectM {
 namespace Audio {
 
+// Logarithmic (octave-based) band ranges matching the original MilkDrop.
+// The spectrum covers 0 Hz to ~22050 Hz across SpectrumSamples (512) bins.
+// Original MilkDrop divides 20–20000 Hz into 3 bands of equal octave width:
+//   net_octaves = log2(20000/20) = ~9.97
+//   octaves_per_band = 9.97 / 3 = ~3.32
+//   mult = 2^3.32 = ~10.0
+// Band boundaries: 20, 200, 2000, 20000 Hz
+// Bin index = SpectrumSamples * freq / max_freq  (max_freq = 22050 Hz)
+//   Bass:   bins 0..4    (0–215 Hz)
+//   Mids:   bins 5..46   (215–2024 Hz)
+//   Treble: bins 47..464 (2024–20000 Hz)
+static constexpr float kMinFreq = 20.0f;
+static constexpr float kMaxFreq = 20000.0f;
+static constexpr float kNyquist = 22050.0f;
+
+static void LogBandRange(int bandIndex, int spectrumSize, int& outStart, int& outEnd)
+{
+    float netOctaves = std::log2(kMaxFreq / kMinFreq);
+    float octavesPerBand = netOctaves / 3.0f;
+    float mult = std::pow(2.0f, octavesPerBand);
+
+    float startFreq = kMinFreq * std::pow(mult, static_cast<float>(bandIndex));
+    float endFreq = kMinFreq * std::pow(mult, static_cast<float>(bandIndex + 1));
+
+    outStart = static_cast<int>(static_cast<float>(spectrumSize) * startFreq / kNyquist);
+    outEnd = static_cast<int>(static_cast<float>(spectrumSize) * endFreq / kNyquist);
+
+    if (outStart < 0)
+    {
+        outStart = 0;
+    }
+    if (outEnd > spectrumSize)
+    {
+        outEnd = spectrumSize;
+    }
+}
+
 Loudness::Loudness(Loudness::Band band)
     : m_band(band)
 {
@@ -28,13 +65,23 @@ auto Loudness::AverageRelative() const -> float
 
 void Loudness::SumBand(const std::array<float, SpectrumSamples>& spectrumSamples)
 {
-    int start = SpectrumSamples * static_cast<int>(m_band) / 6;
-    int end = SpectrumSamples * (static_cast<int>(m_band) + 1) / 6;
+    int start = 0;
+    int end = 0;
+    LogBandRange(static_cast<int>(m_band), SpectrumSamples, start, end);
 
     m_current = 0.0f;
     for (int sample = start; sample < end; sample++)
     {
         m_current += spectrumSamples[sample];
+    }
+
+    // Normalize by the number of bins so that narrow bands (bass) and wide
+    // bands (treble) produce comparable magnitudes, matching the original
+    // MilkDrop which divides by (end - start).
+    int count = end - start;
+    if (count > 0)
+    {
+        m_current /= static_cast<float>(count);
     }
 }
 
