@@ -1291,49 +1291,49 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
 
     y += 22.0;
     DrawFittedLine(engineName,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Menlo" size:11.5],
                    [NSColor colorWithWhite:0.90 alpha:0.80]);
 
     y += 18.0;
     DrawFittedLine(presets,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                    [NSColor colorWithWhite:0.92 alpha:0.78]);
 
     y += 18.0;
     DrawFittedLine(surface,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                    [NSColor colorWithWhite:0.92 alpha:0.78]);
 
     y += 18.0;
     DrawFittedLine(audio,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                    [NSColor colorWithWhite:0.92 alpha:0.78]);
 
     y += 18.0;
     DrawFittedLine(energy,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:11.5],
                    [NSColor colorWithWhite:0.92 alpha:0.70]);
 
     y += 18.0;
     DrawFittedLine(presetSession,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:11.5],
                    [NSColor colorWithWhite:0.92 alpha:0.70]);
 
     y += 18.0;
     DrawFittedLine(presetLibrary,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:11.5],
                    [NSColor colorWithWhite:0.92 alpha:0.70]);
 
     y += 18.0;
     DrawFittedLine(output,
-                   NSMakeRect(leftInset, y, textWidth, 16.0),
+                   NSMakeRect(leftInset, y, textWidth, 18.0),
                    [NSFont fontWithName:@"Avenir Next Regular" size:11.5],
                    [NSColor colorWithWhite:0.92 alpha:0.70]);
 
@@ -1387,22 +1387,22 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
         NSString* buffered = ToNSString(std::string("Buffered frames: ") + std::to_string(bufferedFrames));
 
         DrawFittedLine(backend,
-                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 38.0, textWidth, 16.0),
+                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 38.0, textWidth, 18.0),
                        [NSFont fontWithName:@"Menlo" size:11.5],
                        [NSColor colorWithWhite:0.90 alpha:0.80]);
 
         DrawFittedLine(permission,
-                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 56.0, textWidth, 16.0),
+                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 56.0, textWidth, 18.0),
                        [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                        [NSColor colorWithWhite:0.92 alpha:0.78]);
 
         DrawFittedLine(devices,
-                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 74.0, textWidth, 16.0),
+                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 74.0, textWidth, 18.0),
                        [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                        [NSColor colorWithWhite:0.92 alpha:0.78]);
 
         DrawFittedLine(buffered,
-                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 92.0, textWidth, 16.0),
+                       NSMakeRect(NSMinX(cardRect) + 18.0, NSMinY(cardRect) + 92.0, textWidth, 18.0),
                        [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
                        [NSColor colorWithWhite:0.92 alpha:0.78]);
 
