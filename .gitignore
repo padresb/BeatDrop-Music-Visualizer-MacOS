@@ -1,6 +1,11 @@
 **/Debug
 **/Release
 **/.vs
+build/
+third_party/build/
+third_party/install/
+third_party/projectm/
+third_party/Syphon-Framework/
 **/*.opendb
 **/*.aps
 **/*.suo
