@@ -385,6 +385,13 @@ struct MacPresetEngine::ProjectMRenderer {
 
         projectm_opengl_render_frame(instance);
 
+        // projectM mutates framebuffer bindings internally; rebind the host
+        // target explicitly before readback so preview pixels and the published
+        // texture come from the same final composited frame.
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+
         pixels.resize(static_cast<std::size_t>(width_px) * static_cast<std::size_t>(height_px) * 4U);
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glReadPixels(

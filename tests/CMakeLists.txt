@@ -32,8 +32,44 @@ if(APPLE AND TARGET libprojectM::projectM)
         BEATDROP_PROJECTM_CONFIGURED=1
         BEATDROP_PROJECTM_PROVIDER="test:libprojectM::projectM"
         GL_SILENCE_DEPRECATION=1)
+
+    add_executable(
+        beatdrop_macos_projectm_preset_motion
+        tests/macos_projectm_preset_motion.cpp
+        ${CMAKE_SOURCE_DIR}/macos/src/MacPresetEngine.cpp)
+    target_link_libraries(beatdrop_macos_projectm_preset_motion PRIVATE beatdrop_core libprojectM::projectM)
+    target_include_directories(beatdrop_macos_projectm_preset_motion PRIVATE ${CMAKE_SOURCE_DIR}/macos/src)
+    target_compile_features(beatdrop_macos_projectm_preset_motion PRIVATE cxx_std_17)
+    target_compile_definitions(
+        beatdrop_macos_projectm_preset_motion
+        PRIVATE
+        BEATDROP_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        BEATDROP_PROJECTM_CONFIGURED=1
+        BEATDROP_PROJECTM_PROVIDER="test:libprojectM::projectM"
+        GL_SILENCE_DEPRECATION=1)
+
+    add_executable(
+        beatdrop_macos_projectm_fft_shader_motion
+        tests/macos_projectm_fft_shader_motion.cpp
+        ${CMAKE_SOURCE_DIR}/macos/src/MacPresetEngine.cpp)
+    target_link_libraries(beatdrop_macos_projectm_fft_shader_motion PRIVATE beatdrop_core libprojectM::projectM)
+    target_include_directories(beatdrop_macos_projectm_fft_shader_motion PRIVATE ${CMAKE_SOURCE_DIR}/macos/src)
+    target_compile_features(beatdrop_macos_projectm_fft_shader_motion PRIVATE cxx_std_17)
+    target_compile_definitions(
+        beatdrop_macos_projectm_fft_shader_motion
+        PRIVATE
+        BEATDROP_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        BEATDROP_PROJECTM_CONFIGURED=1
+        BEATDROP_PROJECTM_PROVIDER="test:libprojectM::projectM"
+        GL_SILENCE_DEPRECATION=1)
 endif()
 
 add_test(NAME beatdrop_core_smoke COMMAND beatdrop_core_smoke)
 add_test(NAME beatdrop_preset_session COMMAND beatdrop_preset_session)
 add_test(NAME beatdrop_ini_config_store COMMAND beatdrop_ini_config_store)
+
+if(APPLE AND TARGET libprojectM::projectM)
+    add_test(NAME beatdrop_macos_projectm_smoke COMMAND beatdrop_macos_projectm_smoke)
+    add_test(NAME beatdrop_macos_projectm_preset_motion COMMAND beatdrop_macos_projectm_preset_motion)
+    add_test(NAME beatdrop_macos_projectm_fft_shader_motion COMMAND beatdrop_macos_projectm_fft_shader_motion)
+endif()
