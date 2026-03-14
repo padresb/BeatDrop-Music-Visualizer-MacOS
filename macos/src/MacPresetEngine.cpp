@@ -280,8 +280,6 @@ struct MacPresetEngine::ProjectMRenderer {
             std::max<int>(1, static_cast<int>(std::llround(1.0 / std::max(0.001, delta_seconds)))));
 
         glViewport(0, 0, static_cast<GLsizei>(width_px), static_cast<GLsizei>(height_px));
-        glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         projectm_opengl_render_frame(instance);
 
