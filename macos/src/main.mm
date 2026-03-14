@@ -66,6 +66,20 @@ std::string TrimCopy(const std::string& value) {
     return std::string(first, last);
 }
 
+std::string ExtractDetailClause(const std::string& detail, std::string_view marker) {
+    const std::size_t start = detail.find(marker);
+    if (start == std::string::npos) {
+        return {};
+    }
+
+    const std::size_t end = detail.find('.', start);
+    if (end == std::string::npos) {
+        return detail.substr(start);
+    }
+
+    return detail.substr(start, end - start + 1);
+}
+
 std::filesystem::path NormalizePath(const std::filesystem::path& path) {
     std::error_code error;
     const auto canonical = std::filesystem::weakly_canonical(path, error);
@@ -1460,6 +1474,8 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
         (_outputPublisher && _outputPublisher->enabled() ? std::string("enabled") : std::string("disabled")) +
         " | Clients: " +
         (_outputPublisher && _outputPublisher->has_clients() ? std::string("yes") : std::string("no")));
+    NSString* presetDebug = ToNSString(ExtractDetailClause(_presetState.detail, "Preset source:"));
+    NSString* motionDebug = ToNSString(ExtractDetailClause(_presetState.detail, "Frame motion(luma-grid)"));
     const CGFloat leftInset = NSMinX(bounds) + 18.0;
     const CGFloat textWidth = std::max(0.0, NSWidth(bounds) - 36.0);
     CGFloat y = NSMinY(bounds) + 16.0;
@@ -1523,6 +1539,23 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
                    [NSColor colorWithWhite:0.92 alpha:0.70]);
 
     y += 20.0;
+    if ([presetDebug length] > 0) {
+        DrawFittedLine(presetDebug,
+                       NSMakeRect(leftInset, y, textWidth, 18.0),
+                       [NSFont fontWithName:@"Menlo" size:10.5],
+                       BeatDropSky(0.88));
+        y += 18.0;
+    }
+
+    if ([motionDebug length] > 0) {
+        DrawFittedLine(motionDebug,
+                       NSMakeRect(leftInset, y, textWidth, 18.0),
+                       [NSFont fontWithName:@"Menlo" size:10.5],
+                       BeatDropAmber(0.92));
+        y += 18.0;
+    }
+
+    y += 2.0;
     DrawTextBlock(ToNSString(
                       _presetSessionState.detail + " " + _presetState.detail + " " +
                       (_outputPublisher ? _outputPublisher->detail() : std::string())),

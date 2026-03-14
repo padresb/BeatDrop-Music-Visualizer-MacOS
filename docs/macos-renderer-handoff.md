@@ -11,39 +11,43 @@ Use this file as the entry point for a new session, then read these two docs for
 
 ## Current blocker
 
-The macOS app launches, loads the full preset library, changes active presets, and receives live system-output PCM, but the real `libprojectM` renderer still does not present a first valid frame to the AppKit preview.
+The previous renderer bootstrap blocker is cleared. The macOS app now reaches `RENDERER LIVE`, presents real `libprojectM` frames in the AppKit preview, and publishes the same render surface through Syphon.
 
-The app therefore stays on the native telemetry fallback visualization and the renderer card continues to report `FALLBACK LIVE`.
+The active blocker has moved up a layer: preset responsiveness is inconsistent across the `.milk` corpus. Some presets render and react normally, while others appear visually frozen even though the renderer stays live and the system-output PCM telemetry continues to update.
 
-## Latest user-observed runtime error
+## Latest user-observed runtime symptom
 
-From the in-app `RENDERER` detail text after loading the bundled preset folder and browsing presets:
+From the in-app `RENDERER` detail text and sequential screenshots after loading the bundled preset folder and browsing presets:
 
 - active preset changes correctly
 - preset count remains correct (`6837`)
-- system-output capture stays live
-- renderer fallback remains active
-- latest surfaced backend error: `Unable to allocate the offscreen framebuffer for libprojectM.`
+- renderer card reports `RENDERER LIVE`
+- system-output capture stays live and the light-blue PCM sparkline continues changing
+- frame counters continue advancing
+- some presets still show a visually static main render over multiple seconds, with no obvious response to audio
 
-That error comes from the current `MacPresetEngine::ProjectMRenderer::ensure_render_target()` path in [MacPresetEngine.cpp](/Users/bretpadres/Documents/projects/BeatDrop-Music-Visualizer/macos/src/MacPresetEngine.cpp).
+This means the current debugging target is no longer first-frame setup. It is now understanding how the active `.milk` file is being loaded and exercised at runtime, and why some presets stay non-responsive despite valid render/audio telemetry.
 
 ## What is confirmed working
 
 - native macOS app bundle launches
 - AppKit shell is stable and responsive
-- system-output capture through `ScreenCaptureKit` is live and drives the fallback visualizer
+- system-output capture through `ScreenCaptureKit` is live
 - preset folder drag/drop works
 - preset next/previous/random navigation updates session state and the active preset label
 - shared preset session/history/rating logic is working
 - `libprojectM` is detected and linked at build time
+- the real `libprojectM` renderer now reaches `latest_frame` and is shown in the AppKit preview
+- the renderer card now switches to `RENDERER LIVE`
+- Syphon publishing is wired to the live renderer surface
 - Syphon framework is installed and linked
 - screenshot export and Syphon toggle are wired in the shell
 
 ## What is not working
 
-- the real preset render path never promotes to a valid `latest_frame`
-- the renderer card never switches from `FALLBACK LIVE` to a real live renderer state
-- the main canvas does not visually change with preset changes because only the fallback telemetry renderer is visible
+- preset compatibility is not yet trustworthy across the full library
+- some `.milk` files render but appear static or non-reactive despite live audio/render telemetry
+- the app does not yet expose enough preset-level diagnostics to explain why a given preset is non-responsive
 - microphone capture remains pinned separately as a known unstable path after permission grant
 
 ## Most relevant files
@@ -61,7 +65,7 @@ That error comes from the current `MacPresetEngine::ProjectMRenderer::ensure_ren
 - framebuffer/texture render target replaced the earlier pbuffer-only path
 - `projectm_set_window_size()` stopped being called every frame because the upstream API resets the renderer on that call
 - OpenGL profile fallback now keys off actual `projectm_create()` success, not just successful `CGLCreateContext()`
-- backend detail text is surfaced earlier in the renderer card so fallback screenshots expose the real failing stage
+- backend detail text is surfaced in the renderer card so runtime screenshots expose the current stage and counters
 
 ## Current testing path
 
@@ -72,5 +76,6 @@ Repro used in the current session:
 1. Launch the app.
 2. Drag [presets](/Users/bretpadres/Documents/projects/BeatDrop-Music-Visualizer/resources/Milkdrop2/presets) onto the window.
 3. Browse presets with `Left`, `Right`, or `R`.
-4. Observe that the active preset label changes but the main canvas remains the fallback visualizer.
-5. Read the in-app renderer detail text for the current backend error.
+4. Confirm that the renderer card reports `RENDERER LIVE`.
+5. Compare multiple screenshots over several seconds for the same preset.
+6. Watch for cases where the PCM sparkline and counters move but the main render appears visually unchanged.

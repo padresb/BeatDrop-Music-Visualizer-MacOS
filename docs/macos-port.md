@@ -32,7 +32,7 @@ What already works in this repo revision:
 - CoreAudio input/output device inventory and permission diagnostics
 - local upstream dependency installs for `libprojectM 4.1.6` and `Syphon.framework`
 - manual headless renderer smoke executable for local bring-up, with the note that full libprojectM runtime validation still requires a desktop GUI session because headless CLI processes do not get a valid CoreGraphics connection
-- current renderer blocker: after loading the bundled preset library and switching presets, the app still stays on `FALLBACK LIVE`; the latest surfaced backend error is `Unable to allocate the offscreen framebuffer for libprojectM`
+- current renderer blocker: the app now reaches `RENDERER LIVE`, but compatibility is inconsistent across the preset corpus; some `.milk` files appear visually static or non-reactive even while the renderer and PCM telemetry remain live
 
 ## Port strategy
 
@@ -63,7 +63,7 @@ The realistic path to feature parity is a subsystem replacement, not a compiler-
 4. macOS renderer/audio implementation
    Status: in progress.
    Goal: feed real audio data into the new renderer path and validate baseline preset compatibility.
-   Note: preset/session state and system-output PCM are live, but the real preset render path is still blocked on the first usable libprojectM offscreen frame; the latest in-app error is `Unable to allocate the offscreen framebuffer for libprojectM`.
+   Note: preset/session state, system-output PCM, and the real libprojectM render path are live. The next blocker is compatibility/debuggability for presets that load and render but do not appear to react.
 
 5. Preset UX and persistence
    Status: in progress.

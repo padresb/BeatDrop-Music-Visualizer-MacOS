@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace beatdrop::macos {
@@ -39,7 +40,20 @@ private:
 
     static constexpr std::size_t kHistoryFrameCount = 4096;
 
+    struct PresetDiagnostics {
+        std::size_t per_frame_lines = 0;
+        std::size_t warp_lines = 0;
+        std::size_t comp_lines = 0;
+        std::size_t pixel_lines = 0;
+        std::size_t wavecode_lines = 0;
+        std::size_t shapecode_lines = 0;
+        std::size_t image_references = 0;
+        bool uses_sampler = false;
+        bool load_ok = false;
+    };
+
     float sample_history_at_offset(std::size_t offset_from_oldest) const;
+    void refresh_active_preset_diagnostics();
     void ensure_projectm_backend(double delta_seconds);
 
     std::vector<std::filesystem::path> presets_;
@@ -62,9 +76,15 @@ private:
     double last_delta_seconds_ = 0.0;
     std::unique_ptr<ProjectMRenderer> projectm_renderer_;
     std::vector<std::uint8_t> latest_frame_rgba_;
+    std::vector<std::uint8_t> previous_frame_rgba_;
     std::string backend_detail_;
+    PresetDiagnostics active_preset_diagnostics_;
+    std::filesystem::path diagnosed_preset_path_;
     std::uint32_t latest_frame_width_ = 0;
     std::uint32_t latest_frame_height_ = 0;
+    std::uint64_t latest_frame_signature_ = 0;
+    float latest_frame_motion_ratio_ = 0.0F;
+    std::size_t unchanged_frame_streak_ = 0;
     bool projectm_retry_allowed_ = true;
 };
 

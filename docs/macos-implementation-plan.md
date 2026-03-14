@@ -17,8 +17,8 @@ Ship a fully functional macOS version of BeatDrop that preserves the product val
 - Phase 0 is ready: the replacement program and delivery phases are now fixed in code and docs.
 - Phase 1 is ready: a shared `core/` module owns the cross-platform contracts and project-status model.
 - Phase 2 is ready: the macOS app now produces live microphone and system-output PCM through the shared audio service and ring buffer.
-- Phase 3 is active again: preset/session state and system-output PCM are live, but the real libprojectM renderer is still blocked before the first usable offscreen frame reaches the AppKit preview.
-- Phase 6 is implemented but not the active bottleneck: the Syphon publisher is wired to the renderer surface, but real receiver-side validation depends on the renderer bootstrap issue being cleared first.
+- Phase 3 is active again: preset/session state, system-output PCM, and the real libprojectM renderer are live, but preset responsiveness is inconsistent across the `.milk` corpus and needs better diagnostics.
+- Phase 6 is implemented but not the active bottleneck: the Syphon publisher is wired to the renderer surface, and the main remaining work is receiver validation plus long-session tuning.
 
 ## Recommendation
 
@@ -343,7 +343,7 @@ Current repo status:
 - the shared runtime coordinator drains live PCM into the preset-engine boundary
 - the libprojectM offscreen path now renders into an OpenGL framebuffer-backed texture shared by the AppKit preview and Syphon publisher, replacing the earlier pbuffer-only render target
 - the macOS app exposes a preset-library status card and a real offscreen libprojectM renderer path inside the existing AppKit shell, while retaining the telemetry fallback when the dependency is unavailable
-- current renderer blocker: loading the bundled preset folder and switching presets updates session state correctly, but the app still stays on `FALLBACK LIVE`; the latest surfaced backend error is `Unable to allocate the offscreen framebuffer for libprojectM`
+- current renderer blocker: loading the bundled preset folder now reaches `RENDERER LIVE`, but some presets remain visually static or non-reactive even while render/audio telemetry keeps advancing
 - the macOS app now publishes the live OpenGL render texture through Syphon when output is enabled, with persistent state stored in the shared config
 - shared preset session logic now scans `.milk` libraries, parses `fRating`, supports next/previous/random navigation, and preserves random-mode history
 - the macOS app now maps keyboard preset browsing and drag/drop preset loading onto that shared session
@@ -356,14 +356,14 @@ Current repo status:
 - deviation from the renderer draft: the first concrete libprojectM path uses an offscreen OpenGL drawable inside the existing AppKit shell rather than immediately swapping the UI over to a dedicated OpenGL view, because libprojectM's final pass renders to the default framebuffer and this preserves the shell work already landed
 - deviation from the dependency draft: rather than using Homebrew's outdated `projectM` package, the repo now builds the current upstream `projectM` release from source locally and uses the official Syphon framework project directly
 - deviation from the renderer implementation draft: the offscreen libprojectM target now uses an explicit OpenGL framebuffer/texture pair rather than a CGL pbuffer, so the same render surface can be read back for AppKit and published to Syphon more predictably
-- deviation from the phase tracker: Phase 3 has effectively reopened because the renderer bootstrap is still blocked before the first successful presented frame, even though preset session state, audio dispatch, and renderer dependency setup are all in place
+- deviation from the phase tracker: Phase 3 remains active because renderer bootstrap is no longer the blocker; preset compatibility and runtime diagnostics are now the limiting work even though preset session state, audio dispatch, and renderer dependency setup are all in place
 - deviation from the phase ordering draft: shared preset browsing and drag/drop started before the concrete libprojectM adapter because they are portable parity work and unblock real user workflows immediately
 - deviation from the persistence draft: the macOS app now uses a portable INI-backed config store in Application Support before a native preferences UI exists, because that restores real BeatDrop startup semantics immediately and keeps the config model shareable with Windows
 - deviation from the windowing draft: startup window semantics landed before a dedicated macOS preferences screen because the INI model already exposed them and they are low-risk parity work
 - deviation from the output draft: screenshot export landed before Syphon because it reuses the live AppKit renderer immediately and proves the native frame path can be serialized without waiting on an external framework
 - deviation from the output draft: the first Syphon path publishes the renderer-owned OpenGL texture directly from the existing offscreen libprojectM context instead of adding a second render pass or a dedicated output-only context
 - deviation from the validation draft: a headless CLI smoke executable now exists for the renderer, but the current agent session cannot fully initialize offscreen libprojectM because CoreGraphics rejects OpenGL context creation without a GUI connection
-- renderer bootstrap hardening after the `Unable to allocate the offscreen framebuffer for libprojectM` failure, microphone stream hardening after the post-grant `AVAudioConverter` crash, hot switching, latency reporting, reaction tuning, the optional process-tap backend, Syphon receiver validation, and GUI-session renderer validation are still outstanding
+- preset-level compatibility debugging for non-responsive `.milk` files, microphone stream hardening after the post-grant `AVAudioConverter` crash, hot switching, latency reporting, reaction tuning, the optional process-tap backend, Syphon receiver validation, and GUI-session renderer validation are still outstanding
 
 ### Phase 3: Render engine integration
 

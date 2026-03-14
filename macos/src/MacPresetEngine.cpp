@@ -4,6 +4,8 @@
 #include <cctype>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <string_view>
 #include <system_error>
@@ -36,6 +38,106 @@ float ClampUnit(float value) {
 
 float NormalizeEnergy(float value, float gain = 2.8F) {
     return ClampUnit(value * gain);
+}
+
+bool StartsWith(std::string_view value, std::string_view prefix) {
+    return value.substr(0, prefix.size()) == prefix;
+}
+
+std::string LowercaseCopy(std::string_view value) {
+    std::string copy(value);
+    std::transform(copy.begin(), copy.end(), copy.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return copy;
+}
+
+std::string_view TrimLeft(std::string_view value) {
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
+        value.remove_prefix(1);
+    }
+    return value;
+}
+
+bool ContainsImageReference(std::string_view line) {
+    const std::string lowered = LowercaseCopy(line);
+    return lowered.find(".png") != std::string::npos ||
+        lowered.find(".jpg") != std::string::npos ||
+        lowered.find(".jpeg") != std::string::npos ||
+        lowered.find(".bmp") != std::string::npos ||
+        lowered.find(".dds") != std::string::npos ||
+        lowered.find(".tga") != std::string::npos;
+}
+
+bool ContainsSamplerReference(std::string_view line) {
+    const std::string lowered = LowercaseCopy(line);
+    return lowered.find("sampler_") != std::string::npos ||
+        lowered.find("tex_") != std::string::npos ||
+        lowered.find("gettex") != std::string::npos ||
+        lowered.find("getblur") != std::string::npos;
+}
+
+std::pair<std::uint64_t, float> SampleFrameSignatureAndMotion(
+    const std::vector<std::uint8_t>& current,
+    const std::vector<std::uint8_t>& previous,
+    std::uint32_t width,
+    std::uint32_t height) {
+    if (current.empty()) {
+        return { 0U, 0.0F };
+    }
+
+    constexpr std::uint64_t kOffset = 1469598103934665603ULL;
+    constexpr std::uint64_t kPrime = 1099511628211ULL;
+    constexpr std::size_t kGridX = 48U;
+    constexpr std::size_t kGridY = 48U;
+
+    std::uint64_t signature = kOffset;
+    std::size_t compared_samples = 0;
+    float accumulated_delta = 0.0F;
+
+    for (std::size_t grid_y = 0; grid_y < kGridY; ++grid_y) {
+        const std::uint32_t y = height == 0
+            ? 0U
+            : static_cast<std::uint32_t>((grid_y * std::max<std::uint32_t>(1U, height - 1U)) / std::max<std::size_t>(1U, kGridY - 1U));
+        for (std::size_t grid_x = 0; grid_x < kGridX; ++grid_x) {
+            const std::uint32_t x = width == 0
+                ? 0U
+                : static_cast<std::uint32_t>((grid_x * std::max<std::uint32_t>(1U, width - 1U)) / std::max<std::size_t>(1U, kGridX - 1U));
+            const std::size_t index =
+                (static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + static_cast<std::size_t>(x)) * 4U;
+            if (index + 3U >= current.size()) {
+                continue;
+            }
+
+            const float luminance =
+                (0.2126F * static_cast<float>(current[index + 0U]) +
+                 0.7152F * static_cast<float>(current[index + 1U]) +
+                 0.0722F * static_cast<float>(current[index + 2U])) / 255.0F;
+
+            signature ^= static_cast<std::uint64_t>(current[index + 0U]);
+            signature *= kPrime;
+            signature ^= static_cast<std::uint64_t>(current[index + 1U]);
+            signature *= kPrime;
+            signature ^= static_cast<std::uint64_t>(current[index + 2U]);
+            signature *= kPrime;
+            signature ^= static_cast<std::uint64_t>(current[index + 3U]);
+            signature *= kPrime;
+
+            if (previous.size() == current.size() && index + 3U < previous.size()) {
+                const float previous_luminance =
+                    (0.2126F * static_cast<float>(previous[index + 0U]) +
+                     0.7152F * static_cast<float>(previous[index + 1U]) +
+                     0.0722F * static_cast<float>(previous[index + 2U])) / 255.0F;
+                accumulated_delta += std::fabs(luminance - previous_luminance);
+                compared_samples += 1U;
+            }
+        }
+    }
+
+    const float motion_ratio = compared_samples == 0
+        ? 1.0F
+        : accumulated_delta / static_cast<float>(compared_samples);
+    return { signature, motion_ratio };
 }
 
 bool HasMilkExtension(const std::filesystem::path& path) {
@@ -602,6 +704,12 @@ bool MacPresetEngine::load_preset_library(const std::filesystem::path& library_r
     library_root_ = library_root;
     presets_.clear();
     active_preset_path_.clear();
+    diagnosed_preset_path_.clear();
+    active_preset_diagnostics_ = {};
+    previous_frame_rgba_.clear();
+    latest_frame_signature_ = 0;
+    latest_frame_motion_ratio_ = 0.0F;
+    unchanged_frame_streak_ = 0;
     projectm_retry_allowed_ = true;
 
     if (!std::filesystem::exists(library_root_)) {
@@ -628,16 +736,27 @@ bool MacPresetEngine::set_active_preset(const std::filesystem::path& preset_path
         return false;
     }
 
+    auto mark_preset_switch = [&]() {
+        diagnosed_preset_path_.clear();
+        active_preset_diagnostics_ = {};
+        previous_frame_rgba_.clear();
+        latest_frame_signature_ = 0;
+        latest_frame_motion_ratio_ = 0.0F;
+        unchanged_frame_streak_ = 0;
+    };
+
     const std::filesystem::path normalized_target = NormalizePath(preset_path);
     for (const auto& preset : presets_) {
         if (NormalizePath(preset) == normalized_target) {
             active_preset_path_ = preset;
+            mark_preset_switch();
             return true;
         }
     }
 
     if (NormalizePath(preset_path.parent_path()) == NormalizePath(library_root_)) {
         active_preset_path_ = preset_path;
+        mark_preset_switch();
         return true;
     }
 
@@ -767,6 +886,48 @@ float MacPresetEngine::sample_history_at_offset(std::size_t offset_from_oldest) 
     return mono_history_[index];
 }
 
+void MacPresetEngine::refresh_active_preset_diagnostics() {
+    if (active_preset_path_.empty() || diagnosed_preset_path_ == NormalizePath(active_preset_path_)) {
+        return;
+    }
+
+    active_preset_diagnostics_ = {};
+    diagnosed_preset_path_ = NormalizePath(active_preset_path_);
+
+    std::ifstream stream(diagnosed_preset_path_);
+    if (!stream.is_open()) {
+        return;
+    }
+
+    active_preset_diagnostics_.load_ok = true;
+
+    std::string line;
+    while (std::getline(stream, line)) {
+        const std::string_view trimmed = TrimLeft(line);
+        if (StartsWith(trimmed, "per_frame_") || StartsWith(trimmed, "per_frame_init_")) {
+            active_preset_diagnostics_.per_frame_lines += 1;
+        }
+        if (StartsWith(trimmed, "warp_")) {
+            active_preset_diagnostics_.warp_lines += 1;
+        }
+        if (StartsWith(trimmed, "comp_")) {
+            active_preset_diagnostics_.comp_lines += 1;
+        }
+        if (StartsWith(trimmed, "per_pixel_")) {
+            active_preset_diagnostics_.pixel_lines += 1;
+        }
+        if (StartsWith(trimmed, "wavecode_") || StartsWith(trimmed, "wave_")) {
+            active_preset_diagnostics_.wavecode_lines += 1;
+        }
+        if (StartsWith(trimmed, "shapecode_")) {
+            active_preset_diagnostics_.shapecode_lines += 1;
+        }
+        active_preset_diagnostics_.image_references += ContainsImageReference(trimmed) ? 1U : 0U;
+        active_preset_diagnostics_.uses_sampler =
+            active_preset_diagnostics_.uses_sampler || ContainsSamplerReference(trimmed);
+    }
+}
+
 void MacPresetEngine::ensure_projectm_backend(double delta_seconds) {
 #if BEATDROP_PROJECTM_CONFIGURED
     if (surface_.width_px == 0 || surface_.height_px == 0) {
@@ -796,6 +957,7 @@ void MacPresetEngine::ensure_projectm_backend(double delta_seconds) {
     }
 
     projectm_retry_allowed_ = true;
+    refresh_active_preset_diagnostics();
 
     if (!active_preset_path_.empty()) {
         const auto normalized_active_preset = NormalizePath(active_preset_path_);
@@ -816,6 +978,21 @@ void MacPresetEngine::ensure_projectm_backend(double delta_seconds) {
         backend_detail_ = projectm_renderer_->last_error;
         return;
     }
+
+    const auto [signature, motion_ratio] =
+        SampleFrameSignatureAndMotion(
+            latest_frame_rgba_,
+            previous_frame_rgba_,
+            projectm_renderer_->width_px,
+            projectm_renderer_->height_px);
+    latest_frame_signature_ = signature;
+    latest_frame_motion_ratio_ = motion_ratio;
+    if (!previous_frame_rgba_.empty() && motion_ratio <= 0.0005F) {
+        unchanged_frame_streak_ += 1U;
+    } else {
+        unchanged_frame_streak_ = 0;
+    }
+    previous_frame_rgba_ = latest_frame_rgba_;
 
     latest_frame_width_ = projectm_renderer_->width_px;
     latest_frame_height_ = projectm_renderer_->height_px;
@@ -899,8 +1076,29 @@ core::PresetEngineState MacPresetEngine::describe_state() const {
         detail << " Active preset: " << active_preset_path_.filename().string() << '.';
     }
 
+    if (active_preset_diagnostics_.load_ok) {
+        detail << " Preset source: per_frame=" << active_preset_diagnostics_.per_frame_lines
+               << ", warp=" << active_preset_diagnostics_.warp_lines
+               << ", comp=" << active_preset_diagnostics_.comp_lines
+               << ", per_pixel=" << active_preset_diagnostics_.pixel_lines
+               << ", wavecode=" << active_preset_diagnostics_.wavecode_lines
+               << ", shapecode=" << active_preset_diagnostics_.shapecode_lines
+               << ", image_refs=" << active_preset_diagnostics_.image_references
+               << ", sampler_refs=" << (active_preset_diagnostics_.uses_sampler ? "yes" : "no") << '.';
+    } else if (!active_preset_path_.empty()) {
+        detail << " Preset source diagnostics could not be loaded from disk.";
+    }
+
     if (state.backend_available && !backend_detail_.empty()) {
         detail << ' ' << backend_detail_;
+    }
+
+    if (state.backend_available) {
+        std::ostringstream frame_debug;
+        frame_debug << std::hex << latest_frame_signature_;
+        detail << " Frame motion(luma-grid) " << latest_frame_motion_ratio_
+               << ", static-streak " << unchanged_frame_streak_
+               << ", signature 0x" << frame_debug.str() << '.';
     }
 
     detail << " Peak " << state.audio_peak << ", RMS " << state.audio_rms
