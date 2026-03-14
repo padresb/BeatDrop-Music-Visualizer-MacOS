@@ -629,6 +629,7 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     NSTimer* _timer;
     NSString* _toastMessage;
     NSUInteger _frameCounter;
+    BOOL _renderFullscreen;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -997,6 +998,13 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
 
     const unichar key = [characters characterAtIndex:0];
     switch (key) {
+    case 27: // Escape
+        if (_renderFullscreen) {
+            _renderFullscreen = NO;
+            [self showTransientMessage:@"Render fullscreen OFF"];
+            return;
+        }
+        break;
     case NSLeftArrowFunctionKey:
         [self advancePresetPrevious];
         return;
@@ -1019,6 +1027,10 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
         return;
     case 'o':
         [self toggleSyphonOutput];
+        return;
+    case 'f':
+        _renderFullscreen = !_renderFullscreen;
+        [self showTransientMessage:_renderFullscreen ? @"Render fullscreen ON (press F or Esc to exit)" : @"Render fullscreen OFF"];
         return;
     case 'x':
         if (([event modifierFlags] & NSEventModifierFlagControl) != 0 ||
@@ -1413,6 +1425,28 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     const NSRect bounds = self.bounds;
     const NSRect frame = NSInsetRect(bounds, 26.0, 26.0);
     const double t = CFAbsoluteTimeGetCurrent() - _startTime;
+
+    if (_renderFullscreen) {
+        [[NSColor blackColor] setFill];
+        NSRectFill(bounds);
+        if (_presetEngine && _presetEngine->has_latest_frame()) {
+            DrawRenderedFrame(bounds, *_presetEngine);
+        } else {
+            [self drawBackgroundInRect:bounds];
+            DrawReactiveHalo(bounds, _presetState, t);
+        }
+        if (_toastMessage != nil) {
+            const CGFloat toastWidth = std::min(404.0, std::max(220.0, NSWidth(bounds) - 96.0));
+            const NSRect toastRect = NSMakeRect(
+                (NSWidth(bounds) - toastWidth) / 2.0, 24.0, toastWidth, 48.0);
+            FillRoundedRect(toastRect, 18.0, [NSColor colorWithCalibratedWhite:0.0 alpha:0.6]);
+            DrawTextBlock(_toastMessage,
+                          NSInsetRect(toastRect, 18.0, 12.0),
+                          [NSFont fontWithName:@"Avenir Next Demi Bold" size:12.5],
+                          [NSColor colorWithWhite:0.98 alpha:0.94]);
+        }
+        return;
+    }
 
     [self drawBackgroundInRect:bounds];
 
