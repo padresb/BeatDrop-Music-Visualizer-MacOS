@@ -595,7 +595,138 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     return slice;
 }
 
+void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine& preset_engine) {
+    if (!preset_engine.has_latest_frame()) {
+        return;
+    }
+
+    const auto& pixels = preset_engine.latest_frame_rgba();
+    const std::size_t width = preset_engine.latest_frame_width();
+    const std::size_t height = preset_engine.latest_frame_height();
+    if (pixels.empty() || width == 0 || height == 0) {
+        return;
+    }
+
+    CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+    if (color_space == nullptr) {
+        return;
+    }
+
+    CGDataProviderRef provider =
+        CGDataProviderCreateWithData(nullptr, pixels.data(), pixels.size(), nullptr);
+    if (provider == nullptr) {
+        CGColorSpaceRelease(color_space);
+        return;
+    }
+
+    CGImageRef image = CGImageCreate(
+        width,
+        height,
+        8,
+        32,
+        width * 4,
+        color_space,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault,
+        provider,
+        nullptr,
+        false,
+        kCGRenderingIntentDefault);
+
+    if (image != nullptr) {
+        CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
+        CGContextDrawImage(
+            context,
+            CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height),
+            image);
+        CGImageRelease(image);
+    }
+
+    CGDataProviderRelease(provider);
+    CGColorSpaceRelease(color_space);
+}
+
 } // namespace
+
+// ---------------------------------------------------------------------------
+// Mini-player floating panel
+// ---------------------------------------------------------------------------
+
+@interface MiniPlayerView : NSView
+@property (nonatomic, assign) beatdrop::macos::MacPresetEngine* presetEngine;
+@end
+
+@implementation MiniPlayerView {
+    NSTimer* _timer;
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 60.0)
+                                                  target:self
+                                                selector:@selector(tick:)
+                                                userInfo:nil
+                                                 repeats:YES];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_timer invalidate];
+    _timer = nil;
+}
+
+- (BOOL)isFlipped {
+    return YES;
+}
+
+- (void)tick:(NSTimer*)timer {
+    (void)timer;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    (void)dirtyRect;
+    const NSRect bounds = self.bounds;
+    [[NSColor blackColor] setFill];
+    NSRectFill(bounds);
+
+    if (_presetEngine && _presetEngine->has_latest_frame()) {
+        DrawRenderedFrameNoClip(bounds, *_presetEngine);
+    }
+}
+
+- (void)mouseDown:(NSEvent*)event {
+    [self.window performWindowDragWithEvent:event];
+}
+
+@end
+
+@interface MiniPlayerPanel : NSPanel
+@end
+
+@implementation MiniPlayerPanel
+
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (void)keyDown:(NSEvent*)event {
+    // Forward Escape and M to close the mini-player
+    NSString* characters = [event charactersIgnoringModifiers];
+    if (characters.length > 0) {
+        unichar key = [characters characterAtIndex:0];
+        if (key == 27 || std::tolower(static_cast<unsigned char>(key)) == 'm') {
+            [self orderOut:nil];
+            return;
+        }
+    }
+    [super keyDown:event];
+}
+
+@end
+
+// ---------------------------------------------------------------------------
 
 @interface BeatDropPortView : NSView <NSDraggingDestination>
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -608,6 +739,7 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
 - (BOOL)saveScreenshot;
 - (void)syncPresetEngineFromSession;
 - (void)toggleSyphonOutput;
+- (void)toggleMiniPlayer;
 @end
 
 @implementation BeatDropPortView {
@@ -630,6 +762,8 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     NSString* _toastMessage;
     NSUInteger _frameCounter;
     BOOL _renderFullscreen;
+    MiniPlayerPanel* _miniPlayerPanel;
+    MiniPlayerView* _miniPlayerView;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -931,6 +1065,49 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)toggleMiniPlayer {
+    if (_miniPlayerPanel != nil && [_miniPlayerPanel isVisible]) {
+        [_miniPlayerPanel orderOut:nil];
+        [self showTransientMessage:@"Mini player closed."];
+        return;
+    }
+
+    if (_miniPlayerPanel == nil) {
+        const CGFloat miniWidth = 320.0;
+        const CGFloat miniHeight = 240.0;
+        NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+        NSRect miniFrame = NSMakeRect(
+            NSMaxX(screenFrame) - miniWidth - 24.0,
+            NSMaxY(screenFrame) - miniHeight - 24.0,
+            miniWidth,
+            miniHeight);
+
+        _miniPlayerPanel = [[MiniPlayerPanel alloc]
+            initWithContentRect:miniFrame
+                      styleMask:(NSWindowStyleMaskBorderless |
+                                 NSWindowStyleMaskResizable |
+                                 NSWindowStyleMaskNonactivatingPanel |
+                                 NSWindowStyleMaskUtilityWindow)
+                        backing:NSBackingStoreBuffered
+                          defer:NO];
+        [_miniPlayerPanel setLevel:NSFloatingWindowLevel];
+        [_miniPlayerPanel setHasShadow:YES];
+        [_miniPlayerPanel setOpaque:YES];
+        [_miniPlayerPanel setMovableByWindowBackground:YES];
+        [_miniPlayerPanel setMinSize:NSMakeSize(160.0, 120.0)];
+        [_miniPlayerPanel setTitle:@"BeatDrop Mini"];
+        [_miniPlayerPanel setAnimationBehavior:NSWindowAnimationBehaviorUtilityWindow];
+
+        _miniPlayerView = [[MiniPlayerView alloc] initWithFrame:NSMakeRect(0, 0, miniWidth, miniHeight)];
+        [_miniPlayerView setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
+        [_miniPlayerPanel setContentView:_miniPlayerView];
+    }
+
+    _miniPlayerView.presetEngine = _presetEngine.get();
+    [_miniPlayerPanel makeKeyAndOrderFront:nil];
+    [self showTransientMessage:@"Mini player opened (press M to close)."];
+}
+
 - (void)setFrameSize:(NSSize)newSize {
     [super setFrameSize:newSize];
     if (_presetEngine) {
@@ -943,6 +1120,11 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
 }
 
 - (void)dealloc {
+    if (_miniPlayerPanel != nil) {
+        [_miniPlayerPanel orderOut:nil];
+        _miniPlayerPanel = nil;
+        _miniPlayerView = nil;
+    }
     [_timer invalidate];
     _timer = nil;
     if (_audioService) {
@@ -1031,6 +1213,9 @@ NSRect TakeRightRect(NSRect& remaining, CGFloat width, CGFloat gap = 0.0) {
     case 'f':
         _renderFullscreen = !_renderFullscreen;
         [self showTransientMessage:_renderFullscreen ? @"Render fullscreen ON (press F or Esc to exit)" : @"Render fullscreen OFF"];
+        return;
+    case 'm':
+        [self toggleMiniPlayer];
         return;
     case 'x':
         if (([event modifierFlags] & NSEventModifierFlagControl) != 0 ||
