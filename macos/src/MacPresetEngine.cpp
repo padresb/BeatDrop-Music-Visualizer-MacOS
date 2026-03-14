@@ -204,6 +204,8 @@ struct MacPresetEngine::ProjectMRenderer {
             return false;
         }
 
+        ScopedCurrentContext current(context);
+
         if (!apply_texture_search_paths(texture_paths)) {
             return false;
         }
