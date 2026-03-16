@@ -16,7 +16,9 @@
 #include <ctime>
 #include <filesystem>
 #include <memory>
+#include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -35,6 +37,18 @@ NSString* ToNSString(std::string_view value) {
 
 NSString* ToNSString(const std::filesystem::path& value) {
     return [NSString stringWithUTF8String:value.generic_string().c_str()];
+}
+
+float GetConfigFloat(const beatdrop::core::IniConfigStore& config, const std::string& key, float default_value) {
+    const std::string value = config.get_string(key);
+    if (value.empty()) {
+        return default_value;
+    }
+    try {
+        return std::stof(value);
+    } catch (...) {
+        return default_value;
+    }
 }
 
 std::string UppercaseCopy(std::string value) {
@@ -78,6 +92,34 @@ std::string ExtractDetailClause(const std::string& detail, std::string_view mark
     }
 
     return detail.substr(start, end - start + 1);
+}
+
+std::vector<std::string> SplitString(std::string_view value, char delimiter) {
+    std::vector<std::string> parts;
+    std::size_t start = 0;
+    while (start <= value.size()) {
+        const std::size_t end = value.find(delimiter, start);
+        const std::string piece = TrimCopy(std::string(value.substr(start, end == std::string_view::npos ? value.size() - start : end - start)));
+        if (!piece.empty()) {
+            parts.push_back(piece);
+        }
+        if (end == std::string_view::npos) {
+            break;
+        }
+        start = end + 1;
+    }
+    return parts;
+}
+
+std::string JoinStrings(const std::set<std::string>& values, std::string_view delimiter) {
+    std::string joined;
+    for (const auto& value : values) {
+        if (!joined.empty()) {
+            joined += delimiter;
+        }
+        joined += value;
+    }
+    return joined;
 }
 
 std::filesystem::path NormalizePath(const std::filesystem::path& path) {
@@ -211,6 +253,18 @@ std::shared_ptr<beatdrop::core::IniConfigStore> CreateConfigStore(const std::fil
     }
     if (!config_store->has_key("settings.bEnableSyphonOutput")) {
         config_store->set_bool("settings.bEnableSyphonOutput", true);
+    }
+    if (!config_store->has_key("settings.bPresetAutoAdvance")) {
+        config_store->set_bool("settings.bPresetAutoAdvance", false);
+    }
+    if (!config_store->has_key("settings.fTimeBetweenPresets")) {
+        config_store->set_string("settings.fTimeBetweenPresets", "30.0");
+    }
+    if (!config_store->has_key("settings.fTimeBetweenPresetsRand")) {
+        config_store->set_string("settings.fTimeBetweenPresetsRand", "15.0");
+    }
+    if (!config_store->has_key("settings.fMiniPlayerOpacity")) {
+        config_store->set_string("settings.fMiniPlayerOpacity", "1.0");
     }
     if (!config_store->has_key("settings.nWindowPosX")) {
         config_store->set_int("settings.nWindowPosX", 50);
@@ -726,12 +780,21 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 }
 
 - (void)keyDown:(NSEvent*)event {
-    // Forward Escape and M to close the mini-player
     NSString* characters = [event charactersIgnoringModifiers];
     if (characters.length > 0) {
         unichar key = [characters characterAtIndex:0];
+        // Escape and M close the mini-player
         if (key == 27 || std::tolower(static_cast<unsigned char>(key)) == 'm') {
             [self orderOut:nil];
+            return;
+        }
+        // Number keys 0-9 control mini-player opacity
+        if (key >= '0' && key <= '9') {
+            NSDictionary* userInfo = @{ @"digit": @(key - '0') };
+            [[NSNotificationCenter defaultCenter]
+                postNotificationName:@"BeatDropMiniPlayerOpacityKey"
+                              object:nil
+                            userInfo:userInfo];
             return;
         }
     }
@@ -741,6 +804,17 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 @end
 
 // ---------------------------------------------------------------------------
+
+constexpr std::size_t kPlaylistCount = 5;
+constexpr char kPlaylistKeys[] = { 'g', 'h', 'j', 'k', 'l' };
+constexpr const char* kPlaylistConfigKeys[] = {
+    "settings.szPlaylist1",
+    "settings.szPlaylist2",
+    "settings.szPlaylist3",
+    "settings.szPlaylist4",
+    "settings.szPlaylist5",
+};
+constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
 
 @interface BeatDropPortView : NSView <NSDraggingDestination>
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -752,8 +826,27 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 - (void)showTransientMessage:(NSString*)message;
 - (BOOL)saveScreenshot;
 - (void)syncPresetEngineFromSession;
+- (void)loadPresetBlacklistFromConfig;
+- (void)persistPresetBlacklist;
+- (BOOL)isPresetBlacklisted:(const std::filesystem::path&)presetPath;
+- (BOOL)blacklistPreset:(const std::filesystem::path&)presetPath reason:(NSString*)reason;
+- (BOOL)ensureActivePresetIsAllowed;
+- (BOOL)activateNextAllowedPreset;
+- (BOOL)activatePreviousAllowedPreset;
+- (BOOL)activateRandomAllowedPreset;
+- (void)handlePresetLoadFailureIfNeeded;
 - (void)toggleSyphonOutput;
 - (void)toggleMiniPlayer;
+- (void)resetAutoAdvanceTimer;
+- (void)togglePresetAutoAdvance;
+- (void)autoAdvancePreset;
+- (void)handleMiniPlayerOpacityKey:(NSNotification*)notification;
+- (void)loadPlaylistsFromConfig;
+- (void)persistPlaylists;
+- (void)toggleCurrentPresetInPlaylist:(std::size_t)playlistIndex;
+- (void)cycleActivePlaylist;
+- (BOOL)isPresetInActivePlaylist:(const std::filesystem::path&)presetPath;
+- (void)drawPlaylistPanelInRect:(NSRect)bounds;
 @end
 
 @implementation BeatDropPortView {
@@ -769,6 +862,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     beatdrop::core::PresetSessionState _presetSessionState;
     std::filesystem::path _loadedPresetLibraryRoot;
     std::filesystem::path _repoRoot;
+    std::set<std::string> _presetBlacklist;
     beatdrop::core::RuntimeDispatchStats _runtimeStats;
     CFAbsoluteTime _startTime;
     CFAbsoluteTime _toastExpirationTime;
@@ -776,8 +870,15 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     NSString* _toastMessage;
     NSUInteger _frameCounter;
     BOOL _renderFullscreen;
+    BOOL _presetAutoAdvanceEnabled;
+    CFAbsoluteTime _autoAdvanceDeadline;
+    float _timeBetweenPresets;
+    float _timeBetweenPresetsRand;
+    CGFloat _miniPlayerOpacity;
     MiniPlayerPanel* _miniPlayerPanel;
     MiniPlayerView* _miniPlayerView;
+    std::set<std::string> _playlists[kPlaylistCount];
+    std::size_t _activePlaylist; // 0 = all presets, 1-5 = playlist Q/W/E/R/T
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -792,6 +893,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
         _presetEngine = std::make_unique<beatdrop::macos::MacPresetEngine>();
         _outputPublisher = std::make_unique<beatdrop::macos::MacSyphonOutputPublisher>();
         _presetSession = std::make_unique<beatdrop::core::PresetSession>();
+        [self loadPresetBlacklistFromConfig];
         _presetEngine->set_render_surface(beatdrop::core::RenderSurfaceDescriptor{
             static_cast<std::uint32_t>(std::max(1.0, std::round(NSWidth(frameRect)))),
             static_cast<std::uint32_t>(std::max(1.0, std::round(NSHeight(frameRect)))),
@@ -832,6 +934,23 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
         _startTime = CFAbsoluteTimeGetCurrent();
         _toastExpirationTime = 0.0;
         _frameCounter = 0;
+        _timeBetweenPresets = _configStore ? GetConfigFloat(*_configStore, "settings.fTimeBetweenPresets", 30.0f) : 30.0f;
+        _timeBetweenPresetsRand = _configStore ? GetConfigFloat(*_configStore, "settings.fTimeBetweenPresetsRand", 15.0f) : 15.0f;
+        _presetAutoAdvanceEnabled = _configStore != nullptr && _configStore->get_bool("settings.bPresetAutoAdvance", false);
+        _autoAdvanceDeadline = 0.0;
+        if (_presetAutoAdvanceEnabled) {
+            [self resetAutoAdvanceTimer];
+        }
+        _miniPlayerOpacity = _configStore ? static_cast<CGFloat>(GetConfigFloat(*_configStore, "settings.fMiniPlayerOpacity", 1.0f)) : 1.0;
+        _miniPlayerOpacity = std::clamp(_miniPlayerOpacity, static_cast<CGFloat>(0.3), static_cast<CGFloat>(1.0));
+        _activePlaylist = _configStore
+            ? static_cast<std::size_t>(std::clamp<std::int64_t>(_configStore->get_int("settings.nActivePlaylist", 0), 0, static_cast<std::int64_t>(kPlaylistCount)))
+            : 0;
+        [self loadPlaylistsFromConfig];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleMiniPlayerOpacityKey:)
+                                                     name:@"BeatDropMiniPlayerOpacityKey"
+                                                   object:nil];
         _timer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 60.0)
                                                   target:self
                                                 selector:@selector(tick:)
@@ -876,7 +995,169 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     _configStore->set_bool(
         "settings.bSequentialPresetOrder",
         _presetSessionState.selection_mode == beatdrop::core::PresetSelectionMode::sequential);
+    [self persistPresetBlacklist];
     (void)_configStore->save();
+}
+
+- (void)loadPresetBlacklistFromConfig {
+    _presetBlacklist.clear();
+    if (!_configStore) {
+        return;
+    }
+
+    const std::string encoded = _configStore->get_string("settings.szPresetBlacklist", "");
+    for (const auto& item : SplitString(encoded, '|')) {
+        const auto resolved = ResolveStoredPresetPath(item, _repoRoot);
+        if (!resolved.empty()) {
+            _presetBlacklist.insert(NormalizePath(resolved).generic_string());
+        }
+    }
+}
+
+- (void)persistPresetBlacklist {
+    if (!_configStore) {
+        return;
+    }
+
+    std::set<std::string> encoded_values;
+    for (const auto& item : _presetBlacklist) {
+        encoded_values.insert(EncodeStoredPresetPath(std::filesystem::path(item), _repoRoot));
+    }
+    _configStore->set_string("settings.szPresetBlacklist", JoinStrings(encoded_values, " | "));
+}
+
+- (BOOL)isPresetBlacklisted:(const std::filesystem::path&)presetPath {
+    if (presetPath.empty()) {
+        return NO;
+    }
+    return _presetBlacklist.find(NormalizePath(presetPath).generic_string()) != _presetBlacklist.end() ? YES : NO;
+}
+
+- (BOOL)blacklistPreset:(const std::filesystem::path&)presetPath reason:(NSString*)reason {
+    if (presetPath.empty()) {
+        return NO;
+    }
+
+    const auto normalized = NormalizePath(presetPath);
+    const std::string key = normalized.generic_string();
+    const bool inserted = _presetBlacklist.insert(key).second;
+    if (!inserted) {
+        return NO;
+    }
+
+    [self persistPresetBlacklist];
+    if (_configStore) {
+        (void)_configStore->save();
+    }
+
+    if (reason != nil) {
+        [self showTransientMessage:[NSString stringWithFormat:@"Blacklisted preset: %@ (%@)",
+            ToNSString(normalized.filename()),
+            reason]];
+    } else {
+        [self showTransientMessage:[NSString stringWithFormat:@"Blacklisted preset: %@",
+            ToNSString(normalized.filename())]];
+    }
+    return YES;
+}
+
+- (BOOL)ensureActivePresetIsAllowed {
+    if (!_presetSession) {
+        return NO;
+    }
+
+    _presetSessionState = _presetSession->describe_state();
+    if (!_presetSessionState.has_active_preset || ![self isPresetBlacklisted:_presetSessionState.active_preset_path]) {
+        return YES;
+    }
+
+    const std::size_t preset_count = _presetSessionState.preset_count;
+    if (preset_count == 0) {
+        return NO;
+    }
+
+    for (std::size_t attempt = 0; attempt < preset_count; ++attempt) {
+        bool advanced = false;
+        if (_presetSessionState.selection_mode == beatdrop::core::PresetSelectionMode::sequential) {
+            advanced = _presetSession->activate_next();
+        } else {
+            advanced = _presetSession->activate_random();
+        }
+
+        if (!advanced) {
+            return NO;
+        }
+
+        _presetSessionState = _presetSession->describe_state();
+        if (!_presetSessionState.has_active_preset || ![self isPresetBlacklisted:_presetSessionState.active_preset_path]) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+- (BOOL)activateNextAllowedPreset {
+    if (!_presetSession) {
+        return NO;
+    }
+
+    const auto state = _presetSession->describe_state();
+    const std::size_t preset_count = state.preset_count;
+    for (std::size_t attempt = 0; attempt < std::max<std::size_t>(1, preset_count); ++attempt) {
+        if (!_presetSession->activate_next()) {
+            return NO;
+        }
+        _presetSessionState = _presetSession->describe_state();
+        if (![self isPresetBlacklisted:_presetSessionState.active_preset_path] &&
+            [self isPresetInActivePlaylist:_presetSessionState.active_preset_path]) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+- (BOOL)activatePreviousAllowedPreset {
+    if (!_presetSession) {
+        return NO;
+    }
+
+    const auto state = _presetSession->describe_state();
+    const std::size_t preset_count = state.preset_count;
+    for (std::size_t attempt = 0; attempt < std::max<std::size_t>(1, preset_count); ++attempt) {
+        if (!_presetSession->activate_previous()) {
+            return NO;
+        }
+        _presetSessionState = _presetSession->describe_state();
+        if (![self isPresetBlacklisted:_presetSessionState.active_preset_path] &&
+            [self isPresetInActivePlaylist:_presetSessionState.active_preset_path]) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+- (BOOL)activateRandomAllowedPreset {
+    if (!_presetSession) {
+        return NO;
+    }
+
+    const auto state = _presetSession->describe_state();
+    const std::size_t preset_count = state.preset_count;
+    for (std::size_t attempt = 0; attempt < std::max<std::size_t>(8, preset_count * 2); ++attempt) {
+        if (!_presetSession->activate_random()) {
+            return NO;
+        }
+        _presetSessionState = _presetSession->describe_state();
+        if (![self isPresetBlacklisted:_presetSessionState.active_preset_path] &&
+            [self isPresetInActivePlaylist:_presetSessionState.active_preset_path]) {
+            return YES;
+        }
+    }
+
+    return NO;
 }
 
 - (void)restorePresetSessionFromConfig {
@@ -936,11 +1217,12 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
             libraryLoaded = _presetSession->load_library(defaultPresetRoot);
         }
         if (libraryLoaded) {
-            (void)_presetSession->activate_random();
+            (void)[self activateRandomAllowedPreset];
         }
     }
 
     _presetSessionState = _presetSession->describe_state();
+    (void)[self ensureActivePresetIsAllowed];
     [self syncPresetEngineFromSession];
     [self persistPresetSession];
 }
@@ -983,6 +1265,9 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     }
 
     _presetSessionState = _presetSession->describe_state();
+    if (![self ensureActivePresetIsAllowed]) {
+        _presetSessionState = _presetSession->describe_state();
+    }
     if (_presetSessionState.library_loaded) {
         if (_loadedPresetLibraryRoot != _presetSessionState.library_root) {
             _presetEngine->load_preset_library(_presetSessionState.library_root);
@@ -1005,6 +1290,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     if (loaded) {
         [self syncPresetEngineFromSession];
         [self persistPresetSession];
+        if (_presetAutoAdvanceEnabled) { [self resetAutoAdvanceTimer]; }
     }
 
     [self setNeedsDisplay:YES];
@@ -1012,9 +1298,10 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 }
 
 - (void)advancePresetNext {
-    if (_presetSession && _presetSession->activate_next()) {
+    if ([self activateNextAllowedPreset]) {
         [self syncPresetEngineFromSession];
         [self persistPresetSession];
+        if (_presetAutoAdvanceEnabled) { [self resetAutoAdvanceTimer]; }
         [self setNeedsDisplay:YES];
     } else if (_presetSession) {
         _presetSessionState = _presetSession->describe_state();
@@ -1023,9 +1310,10 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 }
 
 - (void)advancePresetPrevious {
-    if (_presetSession && _presetSession->activate_previous()) {
+    if ([self activatePreviousAllowedPreset]) {
         [self syncPresetEngineFromSession];
         [self persistPresetSession];
+        if (_presetAutoAdvanceEnabled) { [self resetAutoAdvanceTimer]; }
         [self setNeedsDisplay:YES];
     } else if (_presetSession) {
         _presetSessionState = _presetSession->describe_state();
@@ -1034,9 +1322,10 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 }
 
 - (void)advancePresetRandom {
-    if (_presetSession && _presetSession->activate_random()) {
+    if ([self activateRandomAllowedPreset]) {
         [self syncPresetEngineFromSession];
         [self persistPresetSession];
+        if (_presetAutoAdvanceEnabled) { [self resetAutoAdvanceTimer]; }
         [self setNeedsDisplay:YES];
     } else if (_presetSession) {
         _presetSessionState = _presetSession->describe_state();
@@ -1056,6 +1345,9 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     _presetSession->set_selection_mode(nextMode);
     _presetSessionState = _presetSession->describe_state();
     [self persistPresetSession];
+    [self showTransientMessage:nextMode == beatdrop::core::PresetSelectionMode::random
+        ? @"Preset order: RANDOM"
+        : @"Preset order: SEQUENTIAL"];
     [self setNeedsDisplay:YES];
 }
 
@@ -1106,7 +1398,8 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
                           defer:NO];
         [_miniPlayerPanel setLevel:NSFloatingWindowLevel];
         [_miniPlayerPanel setHasShadow:YES];
-        [_miniPlayerPanel setOpaque:YES];
+        [_miniPlayerPanel setOpaque:(_miniPlayerOpacity >= 1.0)];
+        [_miniPlayerPanel setAlphaValue:_miniPlayerOpacity];
         [_miniPlayerPanel setMovableByWindowBackground:YES];
         [_miniPlayerPanel setMinSize:NSMakeSize(160.0, 120.0)];
         [_miniPlayerPanel setTitle:@"BeatDrop Mini"];
@@ -1118,8 +1411,275 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     }
 
     _miniPlayerView.presetEngine = _presetEngine.get();
+    [_miniPlayerPanel setAlphaValue:_miniPlayerOpacity];
+    [_miniPlayerPanel setOpaque:(_miniPlayerOpacity >= 1.0)];
     [_miniPlayerPanel makeKeyAndOrderFront:nil];
     [self showTransientMessage:@"Mini player opened (press M to close)."];
+}
+
+- (void)resetAutoAdvanceTimer {
+    float interval = _timeBetweenPresets +
+        (static_cast<float>(arc4random_uniform(1000)) / 1000.0f) * _timeBetweenPresetsRand;
+    _autoAdvanceDeadline = CFAbsoluteTimeGetCurrent() + static_cast<CFAbsoluteTime>(interval);
+}
+
+- (void)togglePresetAutoAdvance {
+    _presetAutoAdvanceEnabled = !_presetAutoAdvanceEnabled;
+    if (_presetAutoAdvanceEnabled) {
+        [self resetAutoAdvanceTimer];
+    }
+    if (_configStore) {
+        _configStore->set_bool("settings.bPresetAutoAdvance", _presetAutoAdvanceEnabled);
+        (void)_configStore->save();
+    }
+    NSString* message = [NSString stringWithFormat:@"Auto-advance: %s (%.0fs)",
+        _presetAutoAdvanceEnabled ? "ON" : "OFF", _timeBetweenPresets];
+    if (!_renderFullscreen) {
+        [self showTransientMessage:message];
+    }
+}
+
+- (void)autoAdvancePreset {
+    if (!_presetSession) {
+        return;
+    }
+    if (_presetEngine) {
+        _presetEngine->request_smooth_transition(2.5);
+    }
+    if (_presetSessionState.selection_mode == beatdrop::core::PresetSelectionMode::sequential) {
+        (void)[self activateNextAllowedPreset];
+    } else {
+        (void)[self activateRandomAllowedPreset];
+    }
+    [self syncPresetEngineFromSession];
+    [self persistPresetSession];
+    [self resetAutoAdvanceTimer];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)handlePresetLoadFailureIfNeeded {
+    if (!_presetSession || !_presetEngine) {
+        return;
+    }
+
+    _presetSessionState = _presetSession->describe_state();
+    if (!_presetSessionState.has_active_preset || _presetState.backend_available) {
+        return;
+    }
+
+    const std::string detail = _presetState.detail;
+    if (detail.find("libprojectM rejected preset") == std::string::npos) {
+        return;
+    }
+
+    if (![self blacklistPreset:_presetSessionState.active_preset_path reason:@"load rejected"]) {
+        return;
+    }
+
+    BOOL advanced = NO;
+    if (_presetSessionState.selection_mode == beatdrop::core::PresetSelectionMode::sequential) {
+        advanced = [self activateNextAllowedPreset];
+    } else {
+        advanced = [self activateRandomAllowedPreset];
+    }
+
+    if (advanced) {
+        [self syncPresetEngineFromSession];
+        [self persistPresetSession];
+    } else {
+        [self showTransientMessage:@"Every selectable preset is blacklisted."];
+    }
+}
+
+- (void)handleMiniPlayerOpacityKey:(NSNotification*)notification {
+    NSNumber* digitNumber = notification.userInfo[@"digit"];
+    if (digitNumber == nil) {
+        return;
+    }
+    int digit = [digitNumber intValue];
+    // 0 = fully opaque, higher = more transparent, floor at 0.3
+    CGFloat alpha = 1.0 - digit * 0.1;
+    alpha = std::max(alpha, static_cast<CGFloat>(0.3));
+    _miniPlayerOpacity = alpha;
+
+    if (_miniPlayerPanel != nil) {
+        [_miniPlayerPanel setAlphaValue:_miniPlayerOpacity];
+        [_miniPlayerPanel setOpaque:(_miniPlayerOpacity >= 1.0)];
+    }
+    if (_configStore) {
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "%.1f", _miniPlayerOpacity);
+        _configStore->set_string("settings.fMiniPlayerOpacity", buf);
+        (void)_configStore->save();
+    }
+    int percent = static_cast<int>(std::round(_miniPlayerOpacity * 100.0));
+    if (!_renderFullscreen) {
+        [self showTransientMessage:[NSString stringWithFormat:@"Mini-player opacity: %d%%", percent]];
+    }
+}
+
+- (void)loadPlaylistsFromConfig {
+    for (std::size_t i = 0; i < kPlaylistCount; ++i) {
+        _playlists[i].clear();
+        if (!_configStore) {
+            continue;
+        }
+        const std::string encoded = _configStore->get_string(kPlaylistConfigKeys[i], "");
+        for (const auto& item : SplitString(encoded, '|')) {
+            const auto resolved = ResolveStoredPresetPath(item, _repoRoot);
+            if (!resolved.empty()) {
+                _playlists[i].insert(NormalizePath(resolved).generic_string());
+            }
+        }
+    }
+}
+
+- (void)persistPlaylists {
+    if (!_configStore) {
+        return;
+    }
+    for (std::size_t i = 0; i < kPlaylistCount; ++i) {
+        std::set<std::string> encoded_values;
+        for (const auto& item : _playlists[i]) {
+            encoded_values.insert(EncodeStoredPresetPath(std::filesystem::path(item), _repoRoot));
+        }
+        _configStore->set_string(kPlaylistConfigKeys[i], JoinStrings(encoded_values, " | "));
+    }
+    (void)_configStore->save();
+}
+
+- (void)toggleCurrentPresetInPlaylist:(std::size_t)playlistIndex {
+    if (playlistIndex >= kPlaylistCount || !_presetSession) {
+        return;
+    }
+
+    _presetSessionState = _presetSession->describe_state();
+    if (!_presetSessionState.has_active_preset) {
+        [self showTransientMessage:@"No active preset to add."];
+        return;
+    }
+
+    const std::string key = NormalizePath(_presetSessionState.active_preset_path).generic_string();
+    auto& playlist = _playlists[playlistIndex];
+    const auto it = playlist.find(key);
+    if (it != playlist.end()) {
+        playlist.erase(it);
+        [self persistPlaylists];
+        [self showTransientMessage:[NSString stringWithFormat:@"Removed from playlist %s (%zu presets)",
+            kPlaylistNames[playlistIndex], playlist.size()]];
+    } else {
+        playlist.insert(key);
+        [self persistPlaylists];
+        [self showTransientMessage:[NSString stringWithFormat:@"Added to playlist %s (%zu presets)",
+            kPlaylistNames[playlistIndex], playlist.size()]];
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (void)cycleActivePlaylist {
+    _activePlaylist = (_activePlaylist + 1) % (kPlaylistCount + 1);
+    if (_activePlaylist == 0) {
+        [self showTransientMessage:@"Playlist: ALL PRESETS"];
+    } else {
+        const std::size_t idx = _activePlaylist - 1;
+        if (_playlists[idx].empty()) {
+            [self showTransientMessage:[NSString stringWithFormat:@"Playlist %s is empty — no filter applied",
+                kPlaylistNames[idx]]];
+        } else {
+            [self showTransientMessage:[NSString stringWithFormat:@"Playlist: %s (%zu presets)",
+                kPlaylistNames[idx], _playlists[idx].size()]];
+        }
+    }
+    if (_configStore) {
+        _configStore->set_int("settings.nActivePlaylist", static_cast<std::int64_t>(_activePlaylist));
+        (void)_configStore->save();
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (BOOL)isPresetInActivePlaylist:(const std::filesystem::path&)presetPath {
+    if (_activePlaylist == 0) {
+        return YES;
+    }
+    const std::size_t idx = _activePlaylist - 1;
+    if (_playlists[idx].empty()) {
+        return YES; // empty playlist = no filter
+    }
+    return _playlists[idx].find(NormalizePath(presetPath).generic_string()) != _playlists[idx].end() ? YES : NO;
+}
+
+- (void)drawPlaylistPanelInRect:(NSRect)bounds {
+    FillRoundedRect(bounds, 24.0, [NSColor colorWithCalibratedWhite:1.0 alpha:0.06]);
+
+    const CGFloat leftInset = NSMinX(bounds) + 18.0;
+    const CGFloat textWidth = std::max(0.0, NSWidth(bounds) - 36.0);
+    CGFloat y = NSMinY(bounds) + 14.0;
+
+    DrawFittedLine(@"PLAYLISTS",
+                   NSMakeRect(leftInset, y, std::max(0.0, textWidth - 124.0), 18.0),
+                   [NSFont fontWithName:@"Avenir Next Demi Bold" size:15.0],
+                   [NSColor colorWithWhite:0.98 alpha:1.0]);
+
+    NSString* modeLabel = _activePlaylist == 0
+        ? @"ALL"
+        : [NSString stringWithFormat:@"PLAYLIST %s", kPlaylistNames[_activePlaylist - 1]];
+    DrawCenteredText(modeLabel,
+                     NSMakeRect(NSMaxX(bounds) - 138.0, y, 118.0, 18.0),
+                     [NSFont fontWithName:@"Avenir Next Demi Bold" size:11.0],
+                     _activePlaylist == 0 ? BeatDropSky(1.0) : BeatDropAmber(1.0));
+
+    y += 24.0;
+
+    // Check which playlists the current preset belongs to
+    std::string currentPresetKey;
+    if (_presetSessionState.has_active_preset) {
+        currentPresetKey = NormalizePath(_presetSessionState.active_preset_path).generic_string();
+    }
+
+    for (std::size_t i = 0; i < kPlaylistCount; ++i) {
+        const bool isActive = (_activePlaylist == i + 1);
+        const bool currentPresetInThis = !currentPresetKey.empty() &&
+            _playlists[i].find(currentPresetKey) != _playlists[i].end();
+
+        NSColor* dotColor;
+        if (isActive) {
+            dotColor = BeatDropAmber(1.0);
+        } else if (currentPresetInThis) {
+            dotColor = BeatDropMint(0.9);
+        } else {
+            dotColor = [NSColor colorWithWhite:0.5 alpha:0.4];
+        }
+        FillEllipse(NSMakeRect(leftInset, y + 3.0, 10.0, 10.0), dotColor);
+
+        NSString* label = [NSString stringWithFormat:@"[%s]  %zu preset%s",
+            kPlaylistNames[i],
+            _playlists[i].size(),
+            _playlists[i].size() == 1 ? "" : "s"];
+
+        NSColor* textColor = isActive
+            ? [NSColor colorWithWhite:0.98 alpha:1.0]
+            : [NSColor colorWithWhite:0.90 alpha:0.70];
+
+        DrawFittedLine(label,
+                       NSMakeRect(leftInset + 18.0, y, textWidth - 18.0, 16.0),
+                       [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
+                       textColor);
+
+        if (currentPresetInThis) {
+            DrawFittedLine(@"*",
+                           NSMakeRect(NSMaxX(bounds) - 30.0, y, 14.0, 16.0),
+                           [NSFont fontWithName:@"Avenir Next Demi Bold" size:14.0],
+                           BeatDropMint(0.9));
+        }
+
+        y += 20.0;
+    }
+
+    y += 6.0;
+    DrawTextBlock(@"G/H/J/K/L: tag preset, P: cycle playlist",
+                  NSMakeRect(leftInset, y, textWidth, 16.0),
+                  [NSFont fontWithName:@"Avenir Next Regular" size:11.0],
+                  [NSColor colorWithWhite:0.85 alpha:0.50]);
 }
 
 - (void)setFrameSize:(NSSize)newSize {
@@ -1134,6 +1694,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"BeatDropMiniPlayerOpacityKey" object:nil];
     if (_miniPlayerPanel != nil) {
         [_miniPlayerPanel orderOut:nil];
         _miniPlayerPanel = nil;
@@ -1171,6 +1732,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     if (_presetEngine) {
         _presetState = _presetEngine->describe_state();
     }
+    [self handlePresetLoadFailureIfNeeded];
     if (_outputPublisher && _presetEngine && _presetEngine->has_publishable_texture()) {
         (void)_outputPublisher->publish_texture(
             _presetEngine->publisher_context_handle(),
@@ -1178,6 +1740,10 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
             _presetEngine->latest_frame_width(),
             _presetEngine->latest_frame_height(),
             _presetEngine->publisher_texture_flipped());
+    }
+    if (_presetAutoAdvanceEnabled && _autoAdvanceDeadline > 0.0 &&
+        CFAbsoluteTimeGetCurrent() >= _autoAdvanceDeadline) {
+        [self autoAdvancePreset];
     }
     if (_frameCounter % 30 == 0 && _audioService) {
         _audioModes = _audioService->describe_modes();
@@ -1230,6 +1796,27 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
         return;
     case 'm':
         [self toggleMiniPlayer];
+        return;
+    case 't':
+        [self togglePresetAutoAdvance];
+        return;
+    case 'p':
+        [self cycleActivePlaylist];
+        return;
+    case 'g':
+        [self toggleCurrentPresetInPlaylist:0];
+        return;
+    case 'h':
+        [self toggleCurrentPresetInPlaylist:1];
+        return;
+    case 'j':
+        [self toggleCurrentPresetInPlaylist:2];
+        return;
+    case 'k':
+        [self toggleCurrentPresetInPlaylist:3];
+        return;
+    case 'l':
+        [self toggleCurrentPresetInPlaylist:4];
         return;
     case 'x':
         if (([event modifierFlags] & NSEventModifierFlagControl) != 0 ||
@@ -1693,6 +2280,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
     const NSRect barsRect = visualizerContentRect;
     NSRect sidebarFlowRect = sidebarRect;
     const NSRect phaseRect = TakeTopRect(sidebarFlowRect, 112.0, 16.0);
+    const NSRect playlistRect = TakeTopRect(sidebarFlowRect, 186.0, 16.0);
     const NSRect rendererRect = TakeTopRect(sidebarFlowRect, 252.0, 16.0);
     const NSRect audioCardsRect = sidebarFlowRect;
 
@@ -1707,6 +2295,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
         DrawReactiveWave(waveRect, _presetState, t);
     }
     [self drawStatsInRect:statsRect];
+    [self drawPlaylistPanelInRect:playlistRect];
     [self drawRendererSummaryInRect:rendererRect];
     [self drawPhaseSummaryInRect:phaseRect];
     [self drawAudioModeCardsInRect:audioCardsRect];
@@ -1750,7 +2339,7 @@ void DrawRenderedFrameNoClip(NSRect rect, const beatdrop::macos::MacPresetEngine
                    [NSFont fontWithName:@"Avenir Next Demi Bold" size:14.0],
                    [NSColor colorWithWhite:0.97 alpha:0.88]);
 
-    DrawTextBlock(@"Controls: Left/Right browse, Space or R randomize, S toggles order, O toggles Syphon, drop a .milk file or preset folder to reload.",
+    DrawTextBlock(@"Controls: Left/Right browse, Space/R randomize, S order, T auto-advance, G/H/J/K/L tag playlists, P cycle playlist, O Syphon, F fullscreen.",
                   NSMakeRect(NSMinX(footerRect), NSMinY(footerRect) + 6.0, NSWidth(footerRect), 20.0),
                   [NSFont fontWithName:@"Avenir Next Regular" size:13.0],
                   [NSColor colorWithWhite:0.92 alpha:0.66]);
