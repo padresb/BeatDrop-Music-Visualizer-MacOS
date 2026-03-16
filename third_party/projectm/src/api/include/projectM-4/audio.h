@@ -93,6 +93,45 @@ PROJECTM_EXPORT void projectm_pcm_add_int16(projectm_handle instance, const int1
 PROJECTM_EXPORT void projectm_pcm_add_uint8(projectm_handle instance, const uint8_t* samples,
                                             unsigned int count, projectm_channels channels);
 
+/**
+ * @brief Returns the number of spectrum bins produced by the internal FFT.
+ *
+ * This is the size of each channel's spectrum array returned by
+ * projectm_pcm_get_spectrum().
+ *
+ * @return The number of spectrum bins (currently 512).
+ */
+PROJECTM_EXPORT unsigned int projectm_pcm_get_spectrum_bins();
+
+/**
+ * @brief Retrieves the most recent frame's processed spectrum and beat values.
+ *
+ * This returns the exact audio data used during the last call to
+ * projectm_opengl_render_frame(), giving callers a faithful view of what
+ * the active preset received.
+ *
+ * @param instance The projectM instance handle.
+ * @param spectrum_left Output array for left-channel spectrum data.
+ *        Must hold at least projectm_pcm_get_spectrum_bins() floats.
+ *        May be NULL if not needed.
+ * @param spectrum_right Output array for right-channel spectrum data.
+ *        Must hold at least projectm_pcm_get_spectrum_bins() floats.
+ *        May be NULL if not needed.
+ * @param bass Current-frame bass loudness relative to long-term average (~1.0 neutral).
+ * @param mid  Current-frame mid loudness relative to long-term average.
+ * @param treb Current-frame treble loudness relative to long-term average.
+ * @param bass_att Time-smoothed bass loudness relative to long-term average.
+ * @param mid_att  Time-smoothed mid loudness relative to long-term average.
+ * @param treb_att Time-smoothed treble loudness relative to long-term average.
+ *
+ * Any output pointer may be NULL to skip that value.
+ */
+PROJECTM_EXPORT void projectm_pcm_get_frame_audio(projectm_handle instance,
+                                                   float* spectrum_left,
+                                                   float* spectrum_right,
+                                                   float* bass, float* mid, float* treb,
+                                                   float* bass_att, float* mid_att, float* treb_att);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

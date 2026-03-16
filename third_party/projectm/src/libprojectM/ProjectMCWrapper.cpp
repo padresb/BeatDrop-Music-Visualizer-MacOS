@@ -371,6 +371,36 @@ auto projectm_pcm_add_uint8(projectm_handle instance, const uint8_t* samples, un
     PcmAdd(instance, samples, count, channels);
 }
 
+unsigned int projectm_pcm_get_spectrum_bins()
+{
+    return libprojectM::Audio::SpectrumSamples;
+}
+
+void projectm_pcm_get_frame_audio(projectm_handle instance,
+                                  float* spectrum_left,
+                                  float* spectrum_right,
+                                  float* bass, float* mid, float* treb,
+                                  float* bass_att, float* mid_att, float* treb_att)
+{
+    auto* projectMInstance = handle_to_instance(instance);
+    auto data = projectMInstance->PCM().GetFrameAudioData();
+
+    if (spectrum_left)
+    {
+        std::copy(data.spectrumLeft.begin(), data.spectrumLeft.end(), spectrum_left);
+    }
+    if (spectrum_right)
+    {
+        std::copy(data.spectrumRight.begin(), data.spectrumRight.end(), spectrum_right);
+    }
+    if (bass) { *bass = data.bass; }
+    if (mid)  { *mid  = data.mid; }
+    if (treb) { *treb = data.treb; }
+    if (bass_att) { *bass_att = data.bassAtt; }
+    if (mid_att)  { *mid_att  = data.midAtt; }
+    if (treb_att) { *treb_att = data.trebAtt; }
+}
+
 auto projectm_write_debug_image_on_next_frame(projectm_handle, const char*) -> void
 {
     // UNIMPLEMENTED

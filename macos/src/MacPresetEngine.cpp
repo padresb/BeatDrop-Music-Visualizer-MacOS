@@ -387,6 +387,10 @@ struct MacPresetEngine::ProjectMRenderer {
 
         projectm_opengl_render_frame(instance);
 
+        // Snapshot the exact audio data that this frame's preset used, so the
+        // overlay spectrum and beat values match the visualization precisely.
+        snapshot_frame_audio();
+
         // projectM mutates framebuffer bindings internally; rebind the host
         // target explicitly before readback so preview pixels and the published
         // texture come from the same final composited frame.
@@ -680,6 +684,33 @@ struct MacPresetEngine::ProjectMRenderer {
     std::size_t audio_frames_sent = 0;
     std::size_t audio_calls = 0;
     unsigned int max_samples = 0;
+
+    // Cached frame audio data — populated right after render_frame() so the
+    // overlay displays exactly what the preset received for that frame.
+    static constexpr unsigned int kSpectrumBins = 512;
+    std::array<float, kSpectrumBins> cached_spectrum_left {};
+    std::array<float, kSpectrumBins> cached_spectrum_right {};
+    float cached_bass = 0.0F;
+    float cached_mid = 0.0F;
+    float cached_treb = 0.0F;
+    float cached_bass_att = 0.0F;
+    float cached_mid_att = 0.0F;
+    float cached_treb_att = 0.0F;
+    bool has_frame_audio = false;
+
+    void snapshot_frame_audio() {
+        if (instance == nullptr) {
+            has_frame_audio = false;
+            return;
+        }
+        projectm_pcm_get_frame_audio(
+            instance,
+            cached_spectrum_left.data(),
+            cached_spectrum_right.data(),
+            &cached_bass, &cached_mid, &cached_treb,
+            &cached_bass_att, &cached_mid_att, &cached_treb_att);
+        has_frame_audio = true;
+    }
 };
 
 #endif
@@ -866,12 +897,64 @@ void MacPresetEngine::update(double delta_seconds) {
 }
 
 void MacPresetEngine::compute_fft_spectrum() {
+#if BEATDROP_PROJECTM_CONFIGURED
+    // When projectM is active, derive the overlay spectrum directly from its
+    // internal FFT output so the display is a faithful picture of what the
+    // presets are actually receiving — same 2-tap filter, same MilkdropFFT,
+    // same equalization, same everything.
+    if (projectm_renderer_ && projectm_renderer_->has_frame_audio) {
+        // projectM's 512 spectrum bins span 0 Hz to Nyquist (~22 050 Hz).
+        // Map them to 48 logarithmic bars the same way the old vDSP path did,
+        // but using the MilkdropFFT bin width (44100 / 1024 ≈ 43 Hz).
+        constexpr unsigned int kPMSpecBins = ProjectMRenderer::kSpectrumBins;
+        constexpr float kPMFFTSize = 1024.0F; // MilkdropFFT: numFrequencies
+        const float sample_rate = static_cast<float>(audio_stream_format_.sample_rate_hz);
+        const float bin_hz = sample_rate / kPMFFTSize;
+
+        // Find the peak across the whole spectrum so we can normalize
+        // relative to it — this avoids the fixed dB-floor problem that
+        // was clipping treble in the old pipeline.
+        float global_peak = 0.0F;
+        for (unsigned int i = 1; i < kPMSpecBins; ++i) {
+            global_peak = std::max(global_peak, projectm_renderer_->cached_spectrum_left[i]);
+        }
+        // Avoid division by zero; use a minimum peak so bars don't flicker
+        // when audio is near-silent.
+        global_peak = std::max(global_peak, 1e-6F);
+
+        for (std::size_t bar = 0; bar < 48; ++bar) {
+            const float f_low = kMinFreqHz * std::pow(kFreqRatio, static_cast<float>(bar) / 48.0F);
+            const float f_high = kMinFreqHz * std::pow(kFreqRatio, static_cast<float>(bar + 1) / 48.0F);
+
+            int bin_low = std::max(1, static_cast<int>(f_low / bin_hz));
+            int bin_high = std::min(static_cast<int>(kPMSpecBins) - 1, static_cast<int>(f_high / bin_hz));
+            if (bin_high < bin_low) {
+                bin_high = bin_low;
+            }
+
+            // Take the peak magnitude within the bar's bin range.  Using the
+            // peak (rather than averaging across all bins) prevents sparse
+            // treble energy from being diluted by empty neighbouring bins.
+            float bar_peak = 0.0F;
+            for (int b = bin_low; b <= bin_high; ++b) {
+                bar_peak = std::max(bar_peak, projectm_renderer_->cached_spectrum_left[b]);
+            }
+
+            // Normalize to the frame's overall peak, then apply a sqrt curve
+            // for perceptual punch.  This maps the full dynamic range to the
+            // display without a hard dB floor.
+            cached_energy_bars_[bar] = std::sqrt(ClampUnit(bar_peak / global_peak));
+        }
+        return;
+    }
+#endif
+
+    // Fallback: use the independent vDSP pipeline when projectM is not active.
     if (!fft_setup_ || mono_history_count_ < kFFTSize) {
         cached_energy_bars_.fill(0.0F);
         return;
     }
 
-    // Copy most recent kFFTSize samples from the circular buffer.
     float samples[kFFTSize];
     for (vDSP_Length i = 0; i < kFFTSize; ++i) {
         const std::size_t idx =
@@ -879,29 +962,23 @@ void MacPresetEngine::compute_fft_spectrum() {
         samples[i] = mono_history_[idx];
     }
 
-    // Apply Hann window to reduce spectral leakage.
     float window[kFFTSize];
     vDSP_hann_window(window, kFFTSize, vDSP_HANN_NORM);
     vDSP_vmul(samples, 1, window, 1, samples, 1, kFFTSize);
 
-    // Pack interleaved real data into split complex form for vDSP.
     float real[kNumBins];
     float imag[kNumBins];
     DSPSplitComplex split = {real, imag};
     vDSP_ctoz(reinterpret_cast<DSPComplex*>(samples), 2, &split, 1, kNumBins);
 
-    // Forward FFT (in-place).
     vDSP_fft_zrip(static_cast<FFTSetup>(fft_setup_), &split, 1, kFFTOrder, kFFTDirection_Forward);
 
-    // Compute squared magnitudes.
     float magnitudes[kNumBins];
     vDSP_zvmags(&split, 1, magnitudes, 1, kNumBins);
 
-    // Scale by 1/(4*N^2) to normalize the FFT output, then sqrt for amplitude.
     const float fft_scale = 1.0F / (4.0F * static_cast<float>(kFFTSize) * static_cast<float>(kFFTSize));
     vDSP_vsmul(magnitudes, 1, &fft_scale, magnitudes, 1, kNumBins);
 
-    // Map FFT bins to 48 bars with logarithmic frequency spacing.
     const float sample_rate = static_cast<float>(audio_stream_format_.sample_rate_hz);
     const float bin_hz = sample_rate / static_cast<float>(kFFTSize);
 
@@ -915,15 +992,12 @@ void MacPresetEngine::compute_fft_spectrum() {
             bin_high = bin_low;
         }
 
-        // Sum magnitudes across bins in this frequency range.
         float sum = 0.0F;
         for (int b = bin_low; b <= bin_high; ++b) {
             sum += magnitudes[b];
         }
         const float avg = sum / static_cast<float>(std::max(1, bin_high - bin_low + 1));
 
-        // Convert to dB scale for perceptually linear display.
-        // Map roughly -50dB..0dB → 0..1 with a sqrt curve for punch.
         const float db = 10.0F * std::log10(std::max(avg, 1e-12F));
         const float normalized = ClampUnit((db + 50.0F) / 50.0F);
         cached_energy_bars_[bar] = std::sqrt(normalized);
@@ -1129,9 +1203,23 @@ core::PresetEngineState MacPresetEngine::describe_state() const {
     state.update_count = update_count_;
     state.audio_peak = ClampUnit(smoothed_peak_);
     state.audio_rms = ClampUnit(smoothed_rms_ * 2.0F);
-    state.bass_energy = ClampUnit(smoothed_bass_);
-    state.mid_energy = ClampUnit(smoothed_mid_);
-    state.treble_energy = ClampUnit(smoothed_treble_);
+
+#if BEATDROP_PROJECTM_CONFIGURED
+    // When projectM is active, report its actual per-frame beat values so the
+    // dashboard matches what the presets receive.  The relative-loudness values
+    // revolve around 1.0, so we divide by 2 to map the typical 0–2 range into
+    // a 0–1 display range.
+    if (projectm_renderer_ && projectm_renderer_->has_frame_audio) {
+        state.bass_energy = ClampUnit(projectm_renderer_->cached_bass * 0.5F);
+        state.mid_energy = ClampUnit(projectm_renderer_->cached_mid * 0.5F);
+        state.treble_energy = ClampUnit(projectm_renderer_->cached_treb * 0.5F);
+    } else
+#endif
+    {
+        state.bass_energy = ClampUnit(smoothed_bass_);
+        state.mid_energy = ClampUnit(smoothed_mid_);
+        state.treble_energy = ClampUnit(smoothed_treble_);
+    }
     state.surface = surface_;
     state.active_preset_name = active_preset_path_.empty() ? std::string() : active_preset_path_.stem().string();
 
