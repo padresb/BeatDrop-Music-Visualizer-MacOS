@@ -1,5 +1,8 @@
 #include "PCM.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 namespace libprojectM {
 namespace Audio {
 
@@ -52,15 +55,21 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     CopyNewWaveformData(m_inputBufferL, m_waveformL);
     CopyNewWaveformData(m_inputBufferR, m_waveformR);
 
-    // 2. Update spectrum analyzer data for both channels
-    UpdateSpectrum(m_waveformL, m_spectrumL);
-    UpdateSpectrum(m_waveformR, m_spectrumR);
+    // 2. Compute raw FFT spectrum for both channels
+    UpdateSpectrum(m_waveformL, m_spectrumRawL);
+    UpdateSpectrum(m_waveformR, m_spectrumRawR);
 
-    // 3. Align waveforms
+    // 3. Temporal smoothing: fast attack (respond to beats), slow decay (remove jitter).
+    //    Attack coeff ~0.35 means 65% of a new transient comes through immediately.
+    //    Decay coeff  ~0.78 means noise fades at ~22% per frame (~30fps = smooth in ~150ms).
+    SmoothSpectrum(m_spectrumRawL, m_spectrumL, secondsSinceLastFrame);
+    SmoothSpectrum(m_spectrumRawR, m_spectrumR, secondsSinceLastFrame);
+
+    // 4. Align waveforms
     m_alignL.Align(m_waveformL);
     m_alignR.Align(m_waveformR);
 
-    // 4. Update beat detection values
+    // 5. Update beat detection values (uses smoothed spectrum)
     m_bass.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
@@ -92,20 +101,41 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
 
 void PCM::UpdateSpectrum(const WaveformBuffer& waveformData, SpectrumBuffer& spectrumData)
 {
-    std::vector<float> waveformSamples(AudioBufferSamples);
+    // Feed waveform directly into the FFT.  The MilkdropFFT sine envelope
+    // already acts as a proper Hann window to suppress spectral leakage.
+    // The old 2-tap low-pass filter (y[n] = 0.5*(x[n]+x[n-1])) was redundant
+    // with that window and severely attenuated treble (6-23 dB roll-off).
+    std::vector<float> waveformSamples(waveformData.begin(),
+                                       waveformData.begin() + AudioBufferSamples);
     std::vector<float> spectrumValues;
-
-    size_t oldI{0};
-    for (size_t i = 0; i < AudioBufferSamples; i++)
-    {
-        // Damp the input into the FFT a bit, to reduce high-frequency noise:
-        waveformSamples[i] = 0.5f * (waveformData[i] + waveformData[oldI]);
-        oldI = i;
-    }
 
     m_fft.TimeToFrequencyDomain(waveformSamples, spectrumValues);
 
     std::copy(spectrumValues.begin(), spectrumValues.end(), spectrumData.begin());
+}
+
+void PCM::SmoothSpectrum(const SpectrumBuffer& raw, SpectrumBuffer& smoothed,
+                         double secondsSinceLastFrame)
+{
+    // Per-bin exponential moving average.
+    // Fast attack so transients (snares, hi-hats) punch through immediately.
+    // Slow decay so the spectrum doesn't jitter between frames.
+    //
+    // Base rates are tuned for 30 fps; AdjustRate scales them to actual fps.
+    constexpr float kAttackRate = 0.35f; // ~65% of new value on rising edge
+    constexpr float kDecayRate  = 0.55f; // ~45% of new value on falling edge (~0.5s to silence)
+
+    float const perSecondAttack = std::pow(kAttackRate, 30.0f);
+    float const perSecondDecay  = std::pow(kDecayRate, 30.0f);
+    float const dt = static_cast<float>(secondsSinceLastFrame);
+    float const attackCoeff = std::pow(perSecondAttack, dt);
+    float const decayCoeff  = std::pow(perSecondDecay, dt);
+
+    for (size_t i = 0; i < SpectrumSamples; i++)
+    {
+        float coeff = (raw[i] > smoothed[i]) ? attackCoeff : decayCoeff;
+        smoothed[i] = smoothed[i] * coeff + raw[i] * (1.0f - coeff);
+    }
 }
 
 void PCM::CopyNewWaveformData(const WaveformBuffer& source, WaveformBuffer& destination)

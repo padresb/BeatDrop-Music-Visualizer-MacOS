@@ -3624,15 +3624,25 @@ bool HLSLParser::ApplyPreprocessor(const char* fileName, const char* buffer, siz
         }
         else if (m_tokenizer.GetToken() == HLSLToken_PreprocessorElse)
         {
-            // Invert stack state
-            bool state = isCodeActive.top();
-            isCodeActive.pop();
-            isCodeActive.push(!state);
+            // Invert stack state.
+            // Guard: the bottom entry (size == 1) is the global scope sentinel
+            // and must never be popped. An unmatched #else (e.g. from an
+            // #ifdef that the tokenizer cannot recognise) would otherwise
+            // empty the stack and cause undefined behaviour on later access.
+            if (isCodeActive.size() > 1)
+            {
+                bool state = isCodeActive.top();
+                isCodeActive.pop();
+                isCodeActive.push(!state);
+            }
             addOriginalSource = false;
         }
         else if (m_tokenizer.GetToken() == HLSLToken_PreprocessorEndif)
         {
-            isCodeActive.pop();
+            if (isCodeActive.size() > 1)
+            {
+                isCodeActive.pop();
+            }
             addOriginalSource = false;
         }
         else if (m_tokenizer.GetToken() == HLSLToken_PreprocessorDefine)

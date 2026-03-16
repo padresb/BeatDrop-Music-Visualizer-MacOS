@@ -375,45 +375,112 @@ void MilkdropShader::PreprocessPresetShader(std::string& program)
         found = program.find("sampler_state");
     }
 
-    // hlslparser's preprocessor is unstable on these BeatDrop capability guards.
-    // We always provide FFT peak data, so unwrap the guarded code before parsing.
-    auto unwrapCapabilityGuard = [&program](const char* guardToken) {
+    // hlslparser's preprocessor only understands #if/#else/#endif/#define.
+    // It does NOT recognise #ifdef or #ifndef — those tokens pass through as
+    // identifiers, but the matching #endif still pops the preprocessor's
+    // conditional stack, causing an underflow that leads to a segfault.
+    //
+    // Strip every #ifdef/#ifndef block by erasing the directive line and its
+    // matching #endif (with correct nesting).  The guarded code is kept
+    // (treated as always-included); any #else branch is removed.
+    auto stripIfdefBlocks = [&program](const char* directivePrefix) {
         size_t searchPos = 0;
-        size_t guardPos = program.find(guardToken, searchPos);
-        while (guardPos != std::string::npos)
+        while (true)
         {
-            size_t const guardLineEnd = program.find('\n', guardPos);
+            size_t guardPos = program.find(directivePrefix, searchPos);
+            if (guardPos == std::string::npos)
+            {
+                break;
+            }
+
+            // Erase the #ifdef / #ifndef line itself.
+            size_t guardLineEnd = program.find('\n', guardPos);
             if (guardLineEnd == std::string::npos)
             {
+                program.erase(guardPos);
                 break;
             }
-
-            size_t const endifPos = program.find("#endif", guardLineEnd);
-            if (endifPos == std::string::npos)
-            {
-                break;
-            }
-
-            size_t endifLineEnd = program.find('\n', endifPos);
-            if (endifLineEnd == std::string::npos)
-            {
-                endifLineEnd = program.length();
-            }
-            else
-            {
-                endifLineEnd += 1;
-            }
-
-            program.erase(endifPos, endifLineEnd - endifPos);
             program.erase(guardPos, guardLineEnd - guardPos + 1);
 
+            // Walk forward from guardPos to find the matching #endif,
+            // tracking nesting depth so nested #if/#ifdef/#ifndef are
+            // handled correctly.
+            int depth = 1;
+            size_t pos = guardPos;
+            while (depth > 0 && pos < program.length())
+            {
+                size_t nextIf     = program.find("#if",    pos);
+                size_t nextEndif  = program.find("#endif", pos);
+                size_t nextElse   = program.find("#else",  pos);
+
+                if (nextEndif == std::string::npos)
+                {
+                    break; // Unbalanced — nothing more we can do.
+                }
+
+                // If a nested #if/#ifdef/#ifndef comes before the next
+                // #endif, increase depth and skip past it.
+                if (nextIf != std::string::npos && nextIf < nextEndif)
+                {
+                    // Make sure this is actually a directive at the start
+                    // of a token (not inside a word like "texsize_#if...")
+                    // by skipping past it.
+                    depth++;
+                    pos = nextIf + 3;
+                    continue;
+                }
+
+                // At depth 1, an #else means we should remove everything
+                // from the #else to the #endif (the fallback branch).
+                if (depth == 1 && nextElse != std::string::npos && nextElse < nextEndif)
+                {
+                    size_t endifLineEnd = program.find('\n', nextEndif);
+                    if (endifLineEnd == std::string::npos)
+                    {
+                        endifLineEnd = program.length();
+                    }
+                    else
+                    {
+                        endifLineEnd += 1;
+                    }
+                    program.erase(nextElse, endifLineEnd - nextElse);
+                    depth = 0;
+                    break;
+                }
+
+                if (depth == 1)
+                {
+                    // This #endif matches our directive — erase the line.
+                    size_t endifLineEnd = program.find('\n', nextEndif);
+                    if (endifLineEnd == std::string::npos)
+                    {
+                        endifLineEnd = program.length();
+                    }
+                    else
+                    {
+                        endifLineEnd += 1;
+                    }
+                    program.erase(nextEndif, endifLineEnd - nextEndif);
+                    depth = 0;
+                }
+                else
+                {
+                    depth--;
+                    pos = nextEndif + 6;
+                }
+            }
+
             searchPos = guardPos;
-            guardPos = program.find(guardToken, searchPos);
         }
     };
 
-    unwrapCapabilityGuard("#if HAS_FFT_PEAK");
-    unwrapCapabilityGuard("#ifdef HAS_FFT_PEAK");
+    stripIfdefBlocks("#ifdef ");
+    stripIfdefBlocks("#ifndef ");
+
+    // Also strip #if with non-integer conditions that the M4 parser
+    // cannot evaluate (it only supports #if <integer>).  BeatDrop always
+    // provides FFT peak data, so treat HAS_FFT_PEAK as defined/true.
+    stripIfdefBlocks("#if HAS_FFT_PEAK");
 
     // replace shader_body with entry point function
     found = program.find("shader_body");

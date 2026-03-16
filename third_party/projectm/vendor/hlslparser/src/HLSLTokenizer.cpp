@@ -314,8 +314,8 @@ const char* HLSLTokenizer::getLastPos(const bool trimmed)
 
     if (trimmed)
     {
-        // Skip white space
-        while(isspace(start[0])) {
+        // Skip white space (with bounds check to avoid reading past the buffer)
+        while(start < m_bufferEnd && isspace(start[0])) {
             start++;
         }
     }

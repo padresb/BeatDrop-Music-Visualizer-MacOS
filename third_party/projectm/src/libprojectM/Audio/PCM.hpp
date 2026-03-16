@@ -85,6 +85,13 @@ private:
     void UpdateSpectrum(const WaveformBuffer& waveformData, SpectrumBuffer& spectrumData);
 
     /**
+     * Applies per-bin temporal smoothing (fast attack, slow decay) to reduce
+     * frame-to-frame jitter while preserving transient response.
+     */
+    void SmoothSpectrum(const SpectrumBuffer& raw, SpectrumBuffer& smoothed,
+                        double secondsSinceLastFrame);
+
+    /**
      * Copies data out of the circular input buffer into the per-frame waveform buffer.
      */
     void CopyNewWaveformData(const WaveformBuffer& source, WaveformBuffer& destination);
@@ -98,9 +105,14 @@ private:
     WaveformBuffer m_waveformL{0.f}; //!< Left-channel waveform data, aligned. Only the first WaveformSamples number of samples are valid.
     WaveformBuffer m_waveformR{0.f}; //!< Right-channel waveform data, aligned. Only the first WaveformSamples number of samples are valid.
 
-    // Frame spectrum data
-    SpectrumBuffer m_spectrumL{0.f}; //!< Left-channel spectrum data.
-    SpectrumBuffer m_spectrumR{0.f}; //!< Right-channel spectrum data.
+    // Frame spectrum data (raw per-frame FFT output)
+    SpectrumBuffer m_spectrumRawL{0.f}; //!< Left-channel raw FFT spectrum.
+    SpectrumBuffer m_spectrumRawR{0.f}; //!< Right-channel raw FFT spectrum.
+
+    // Temporally-smoothed spectrum data (what presets and callers receive).
+    // Fast attack (respond to transients), slow decay (suppress jitter).
+    SpectrumBuffer m_spectrumL{0.f}; //!< Left-channel smoothed spectrum data.
+    SpectrumBuffer m_spectrumR{0.f}; //!< Right-channel smoothed spectrum data.
 
     MilkdropFFT m_fft{WaveformSamples, SpectrumSamples, true}; //!< Spectrum analyzer instance.
 

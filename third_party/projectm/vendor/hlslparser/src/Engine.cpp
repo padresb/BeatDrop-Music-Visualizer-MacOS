@@ -7,6 +7,10 @@
 #include <locale>
 #include <sstream>
 
+#if defined(_MSC_VER)
+#include <locale.h>
+#endif
+
 namespace M4 {
 
 // Engine/String.cpp
@@ -65,7 +69,14 @@ bool String_EqualNoCase(const char * a, const char * b) {
 }
 
 static inline double iss_strtod(const char * in, char ** end) {
-    char * in_var = const_cast<char *>(in);
+    char* in_var = const_cast<char*>(in);
+#if defined(_MSC_VER)
+    static _locale_t c_locale = _create_locale(LC_NUMERIC, "C");
+    return _strtod_l(in, end, c_locale);
+#elif defined(__APPLE__) || defined(__linux__)
+    static locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", nullptr);
+    return strtod_l(in, end, c_locale);
+#else
     double df;
     std::istringstream iss(in);
     iss.imbue(std::locale("C"));
@@ -86,6 +97,7 @@ static inline double iss_strtod(const char * in, char ** end) {
     }
     *end = in_var + pos;
     return df;
+#endif
 }
 
 double String_ToDouble(const char * str, char ** endptr) {

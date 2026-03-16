@@ -943,6 +943,8 @@ void MacPresetEngine::compute_fft_spectrum() {
             // Normalize to the frame's overall peak, then apply a sqrt curve
             // for perceptual punch.  This maps the full dynamic range to the
             // display without a hard dB floor.
+            // No extra smoothing here — the overlay must faithfully show what
+            // presets receive (spectrum is already smoothed in PCM::SmoothSpectrum).
             cached_energy_bars_[bar] = std::sqrt(ClampUnit(bar_peak / global_peak));
         }
         return;

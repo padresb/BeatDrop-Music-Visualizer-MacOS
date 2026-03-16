@@ -83,6 +83,18 @@ void Loudness::SumBand(const std::array<float, SpectrumSamples>& spectrumSamples
     {
         m_current /= static_cast<float>(count);
     }
+
+    // Apply empirical calibration factors from the original MilkDrop.
+    // These were determined from 244 songs (10 seconds each) to equalize
+    // the three bands so they produce similar magnitude values for typical
+    // music. Without these, bass dominates and treble is proportionally weak.
+    // See: vis_milk2/pluginshell.cpp lines 1848-1855.
+    static constexpr float kCalibration[] = {
+        0.326781557f, // Bass average level
+        0.380873770f, // Mids average level
+        0.199888934f  // Treble average level
+    };
+    m_current /= kCalibration[static_cast<int>(m_band)];
 }
 
 void Loudness::UpdateBandAverage(double secondsSinceLastFrame, uint32_t frame)
