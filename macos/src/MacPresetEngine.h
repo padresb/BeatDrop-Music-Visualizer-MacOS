@@ -21,6 +21,7 @@ public:
     void set_audio_stream_format(core::AudioStreamFormat format) override;
     bool load_preset_library(const std::filesystem::path& library_root) override;
     bool set_active_preset(const std::filesystem::path& preset_path) override;
+    void request_smooth_transition(double blend_seconds = 2.5);
     void set_render_surface(core::RenderSurfaceDescriptor surface) override;
     void ingest_audio_frames(const float* interleaved_stereo_frames, std::size_t frame_count) override;
     void update(double delta_seconds) override;
@@ -55,6 +56,7 @@ private:
     float sample_history_at_offset(std::size_t offset_from_oldest) const;
     void refresh_active_preset_diagnostics();
     void ensure_projectm_backend(double delta_seconds);
+    void compute_fft_spectrum();
 
     std::vector<std::filesystem::path> presets_;
     std::filesystem::path library_root_;
@@ -63,9 +65,16 @@ private:
     core::RenderSurfaceDescriptor surface_;
     std::size_t audio_frames_ingested_ = 0;
     std::size_t update_count_ = 0;
+    static constexpr std::size_t kBandHistoryCount = 128;
+
     std::array<float, kHistoryFrameCount> mono_history_ {};
     std::size_t mono_history_cursor_ = 0;
     std::size_t mono_history_count_ = 0;
+    std::array<float, kBandHistoryCount> bass_history_ {};
+    std::array<float, kBandHistoryCount> mid_history_ {};
+    std::array<float, kBandHistoryCount> treble_history_ {};
+    std::size_t band_history_cursor_ = 0;
+    std::size_t band_history_count_ = 0;
     float smoothed_peak_ = 0.0F;
     float smoothed_rms_ = 0.0F;
     float smoothed_bass_ = 0.0F;
@@ -74,6 +83,8 @@ private:
     float low_pass_state_ = 0.0F;
     float mid_pass_state_ = 0.0F;
     double last_delta_seconds_ = 0.0;
+    void* fft_setup_ = nullptr;
+    std::array<float, 48> cached_energy_bars_ {};
     std::unique_ptr<ProjectMRenderer> projectm_renderer_;
     std::vector<std::uint8_t> latest_frame_rgba_;
     std::vector<std::uint8_t> previous_frame_rgba_;
@@ -86,6 +97,8 @@ private:
     float latest_frame_motion_ratio_ = 0.0F;
     std::size_t unchanged_frame_streak_ = 0;
     bool projectm_retry_allowed_ = true;
+    bool pending_smooth_transition_ = false;
+    double pending_blend_seconds_ = 2.5;
 };
 
 } // namespace beatdrop::macos

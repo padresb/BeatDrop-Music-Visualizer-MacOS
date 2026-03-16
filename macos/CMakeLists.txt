@@ -123,6 +123,7 @@ find_library(COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
 find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
 find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
 find_library(SCREENCAPTUREKIT_FRAMEWORK ScreenCaptureKit REQUIRED)
+find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
 
 target_link_libraries(
     BeatDropMacBootstrap
@@ -134,7 +135,8 @@ target_link_libraries(
     ${COREAUDIO_FRAMEWORK}
     ${COREGRAPHICS_FRAMEWORK}
     ${COREMEDIA_FRAMEWORK}
-    ${SCREENCAPTUREKIT_FRAMEWORK})
+    ${SCREENCAPTUREKIT_FRAMEWORK}
+    ${ACCELERATE_FRAMEWORK})
 
 if(BEATDROP_PROJECTM_LINK_TARGET)
     target_link_libraries(BeatDropMacBootstrap PRIVATE ${BEATDROP_PROJECTM_LINK_TARGET})

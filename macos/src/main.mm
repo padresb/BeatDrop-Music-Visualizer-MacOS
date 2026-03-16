@@ -602,43 +602,49 @@ void DrawReactiveHalo(NSRect rect, const beatdrop::core::PresetEngineState& pres
                 [BeatDropMint(0.14 + ClampUnit(presetState.treble_energy) * 0.22) colorWithAlphaComponent:0.16 + ClampUnit(presetState.treble_energy) * 0.16]);
 }
 
-void DrawReactiveWave(NSRect rect, const beatdrop::core::PresetEngineState& presetState, double t) {
-    NSBezierPath* path = [NSBezierPath bezierPath];
-    [path setLineWidth:3.0];
-    [[BeatDropMint(0.9) colorWithAlphaComponent:0.9] setStroke];
+void DrawSpectrumBars(NSRect rect, const beatdrop::core::PresetEngineState& presetState, double t) {
+    constexpr std::size_t kBarCount = 48;
+    constexpr std::size_t kBarsPerBand = 16;
+    const CGFloat gap = 2.0;
+    const CGFloat totalGap = gap * (kBarCount - 1);
+    const CGFloat barWidth = (NSWidth(rect) - totalGap) / static_cast<CGFloat>(kBarCount);
+    const CGFloat maxHeight = NSHeight(rect);
 
-    const CGFloat width = NSWidth(rect);
-    const CGFloat height = NSHeight(rect);
-    const CGFloat midY = NSMinY(rect) + height * 0.5;
+    for (std::size_t i = 0; i < kBarCount; ++i) {
+        const CGFloat x = NSMinX(rect) + static_cast<CGFloat>(i) * (barWidth + gap);
 
-    if (presetState.supports_live_visualization && !presetState.waveform_preview.empty()) {
-        for (std::size_t index = 0; index < presetState.waveform_preview.size(); ++index) {
-            const CGFloat x = NSMinX(rect) +
-                width * static_cast<CGFloat>(index) / static_cast<CGFloat>(presetState.waveform_preview.size() - 1);
-            const CGFloat y = midY - static_cast<CGFloat>(presetState.waveform_preview[index]) * (height * 0.42F);
+        float energy = 0.0F;
+        NSColor* barColor;
 
-            if (index == 0) {
-                [path moveToPoint:NSMakePoint(x, y)];
-            } else {
-                [path lineToPoint:NSMakePoint(x, y)];
-            }
+        if (presetState.supports_live_visualization) {
+            energy = presetState.energy_bars[i];
+        } else {
+            // Idle animation
+            energy = static_cast<float>(0.08 + std::fabs(std::sin(t * 1.4 + i * 0.31) * 0.25));
         }
-    } else {
-        for (NSInteger i = 0; i <= 160; ++i) {
-            const CGFloat x = NSMinX(rect) + width * static_cast<CGFloat>(i) / 160.0;
-            const double phase = t * 1.7 + static_cast<double>(i) * 0.18;
-            const double amplitude = std::sin(phase) * 24.0 + std::sin(phase * 0.5) * 18.0;
-            const CGFloat y = midY + static_cast<CGFloat>(amplitude);
 
-            if (i == 0) {
-                [path moveToPoint:NSMakePoint(x, y)];
-            } else {
-                [path lineToPoint:NSMakePoint(x, y)];
-            }
+        // Color by band: first 16 = bass (amber), next 16 = mid (sky), last 16 = treble (mint)
+        const std::size_t band = i / kBarsPerBand;
+        if (band == 0) {
+            barColor = [BeatDropAmber(0.7 + energy * 0.3) colorWithAlphaComponent:0.75 + energy * 0.20];
+        } else if (band == 1) {
+            barColor = [BeatDropSky(0.7 + energy * 0.3) colorWithAlphaComponent:0.70 + energy * 0.25];
+        } else {
+            barColor = [BeatDropMint(0.7 + energy * 0.3) colorWithAlphaComponent:0.65 + energy * 0.30];
         }
+
+        const CGFloat height = std::max(2.0, static_cast<CGFloat>(energy) * maxHeight);
+        const NSRect barRect = NSMakeRect(x, NSMaxY(rect) - height, barWidth, height);
+        FillRoundedRect(barRect, barWidth * 0.35, barColor);
     }
 
-    [path stroke];
+    // Band labels
+    const CGFloat labelY = NSMinY(rect) + 2.0;
+    NSFont* labelFont = [NSFont fontWithName:@"Avenir Next Demi Bold" size:9.0];
+    const CGFloat bandWidth = (NSWidth(rect) / 3.0);
+    DrawCenteredText(@"BASS", NSMakeRect(NSMinX(rect), labelY, bandWidth, 12.0), labelFont, [BeatDropAmber(0.5) colorWithAlphaComponent:0.5]);
+    DrawCenteredText(@"MID", NSMakeRect(NSMinX(rect) + bandWidth, labelY, bandWidth, 12.0), labelFont, [BeatDropSky(0.5) colorWithAlphaComponent:0.5]);
+    DrawCenteredText(@"TREBLE", NSMakeRect(NSMinX(rect) + bandWidth * 2.0, labelY, bandWidth, 12.0), labelFont, [BeatDropMint(0.5) colorWithAlphaComponent:0.5]);
 }
 
 NSRect TakeTopRect(NSRect& remaining, CGFloat height, CGFloat gap = 0.0) {
@@ -2301,11 +2307,11 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
     if (_presetEngine && _presetEngine->has_latest_frame()) {
         DrawRenderedFrame(visualizerCardRect, *_presetEngine);
         FillRoundedRect(NSInsetRect(waveRect, -10.0, -12.0), 18.0, [BeatDropInk(0.34) colorWithAlphaComponent:0.34]);
-        DrawReactiveWave(waveRect, _presetState, t);
+        DrawSpectrumBars(waveRect, _presetState, t);
     } else {
         DrawReactiveHalo(barsRect, _presetState, t);
         [self drawAnimatedBarsInRect:barsRect time:t];
-        DrawReactiveWave(waveRect, _presetState, t);
+        DrawSpectrumBars(waveRect, _presetState, t);
     }
     [self drawStatsInRect:statsRect];
     [self drawPlaylistPanelInRect:playlistRect];

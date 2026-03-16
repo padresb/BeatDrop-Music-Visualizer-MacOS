@@ -12,6 +12,8 @@
 #include <unordered_set>
 #include <utility>
 
+#include <Accelerate/Accelerate.h>
+
 #if BEATDROP_PROJECTM_CONFIGURED
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
@@ -332,7 +334,7 @@ struct MacPresetEngine::ProjectMRenderer {
         return true;
     }
 
-    bool load_preset(const std::filesystem::path& preset_path) {
+    bool load_preset(const std::filesystem::path& preset_path, bool smooth_transition = false) {
         if (instance == nullptr) {
             last_error = "projectM is not initialized yet.";
             return false;
@@ -340,7 +342,7 @@ struct MacPresetEngine::ProjectMRenderer {
 
         ScopedCurrentContext current(context);
         last_error.clear();
-        projectm_load_preset_file(instance, preset_path.string().c_str(), false);
+        projectm_load_preset_file(instance, preset_path.string().c_str(), smooth_transition);
         if (!last_error.empty()) {
             return false;
         }
@@ -682,9 +684,24 @@ struct MacPresetEngine::ProjectMRenderer {
 
 #endif
 
-MacPresetEngine::MacPresetEngine() = default;
+namespace {
+constexpr int kFFTOrder = 11; // 2^11 = 2048
+constexpr vDSP_Length kFFTSize = 1 << kFFTOrder;
+constexpr vDSP_Length kNumBins = kFFTSize / 2;
+constexpr float kMinFreqHz = 20.0F;
+constexpr float kMaxFreqHz = 20000.0F;
+constexpr float kFreqRatio = kMaxFreqHz / kMinFreqHz; // 1000
+} // namespace
 
-MacPresetEngine::~MacPresetEngine() = default;
+MacPresetEngine::MacPresetEngine() {
+    fft_setup_ = vDSP_create_fftsetup(kFFTOrder, kFFTRadix2);
+}
+
+MacPresetEngine::~MacPresetEngine() {
+    if (fft_setup_) {
+        vDSP_destroy_fftsetup(static_cast<FFTSetup>(fft_setup_));
+    }
+}
 
 std::string MacPresetEngine::engine_name() const {
 #if BEATDROP_PROJECTM_CONFIGURED
@@ -736,6 +753,11 @@ bool MacPresetEngine::load_preset_library(const std::filesystem::path& library_r
     }
 
     return !presets_.empty();
+}
+
+void MacPresetEngine::request_smooth_transition(double blend_seconds) {
+    pending_smooth_transition_ = true;
+    pending_blend_seconds_ = blend_seconds;
 }
 
 bool MacPresetEngine::set_active_preset(const std::filesystem::path& preset_path) {
@@ -815,9 +837,19 @@ void MacPresetEngine::ingest_audio_frames(const float* interleaved_stereo_frames
     const float frame_rms = std::sqrt(squared_sum / static_cast<float>(frame_count));
     smoothed_peak_ = smoothed_peak_ * 0.78F + frame_peak * 0.22F;
     smoothed_rms_ = smoothed_rms_ * 0.82F + frame_rms * 0.18F;
-    smoothed_bass_ = smoothed_bass_ * 0.74F + NormalizeEnergy(bass_sum / static_cast<float>(frame_count)) * 0.26F;
-    smoothed_mid_ = smoothed_mid_ * 0.74F + NormalizeEnergy(mid_sum / static_cast<float>(frame_count)) * 0.26F;
-    smoothed_treble_ = smoothed_treble_ * 0.74F + NormalizeEnergy(treble_sum / static_cast<float>(frame_count)) * 0.26F;
+
+    const float norm_bass = NormalizeEnergy(bass_sum / static_cast<float>(frame_count));
+    const float norm_mid = NormalizeEnergy(mid_sum / static_cast<float>(frame_count));
+    const float norm_treble = NormalizeEnergy(treble_sum / static_cast<float>(frame_count));
+    smoothed_bass_ = smoothed_bass_ * 0.74F + norm_bass * 0.26F;
+    smoothed_mid_ = smoothed_mid_ * 0.74F + norm_mid * 0.26F;
+    smoothed_treble_ = smoothed_treble_ * 0.74F + norm_treble * 0.26F;
+
+    bass_history_[band_history_cursor_] = norm_bass;
+    mid_history_[band_history_cursor_] = norm_mid;
+    treble_history_[band_history_cursor_] = norm_treble;
+    band_history_cursor_ = (band_history_cursor_ + 1) % kBandHistoryCount;
+    band_history_count_ = std::min(band_history_count_ + 1, kBandHistoryCount);
 
 #if BEATDROP_PROJECTM_CONFIGURED
     if (projectm_renderer_ && projectm_renderer_->ready()) {
@@ -829,7 +861,73 @@ void MacPresetEngine::ingest_audio_frames(const float* interleaved_stereo_frames
 void MacPresetEngine::update(double delta_seconds) {
     ++update_count_;
     last_delta_seconds_ = delta_seconds;
+    compute_fft_spectrum();
     ensure_projectm_backend(delta_seconds);
+}
+
+void MacPresetEngine::compute_fft_spectrum() {
+    if (!fft_setup_ || mono_history_count_ < kFFTSize) {
+        cached_energy_bars_.fill(0.0F);
+        return;
+    }
+
+    // Copy most recent kFFTSize samples from the circular buffer.
+    float samples[kFFTSize];
+    for (vDSP_Length i = 0; i < kFFTSize; ++i) {
+        const std::size_t idx =
+            (mono_history_cursor_ + mono_history_.size() - kFFTSize + i) % mono_history_.size();
+        samples[i] = mono_history_[idx];
+    }
+
+    // Apply Hann window to reduce spectral leakage.
+    float window[kFFTSize];
+    vDSP_hann_window(window, kFFTSize, vDSP_HANN_NORM);
+    vDSP_vmul(samples, 1, window, 1, samples, 1, kFFTSize);
+
+    // Pack interleaved real data into split complex form for vDSP.
+    float real[kNumBins];
+    float imag[kNumBins];
+    DSPSplitComplex split = {real, imag};
+    vDSP_ctoz(reinterpret_cast<DSPComplex*>(samples), 2, &split, 1, kNumBins);
+
+    // Forward FFT (in-place).
+    vDSP_fft_zrip(static_cast<FFTSetup>(fft_setup_), &split, 1, kFFTOrder, kFFTDirection_Forward);
+
+    // Compute squared magnitudes.
+    float magnitudes[kNumBins];
+    vDSP_zvmags(&split, 1, magnitudes, 1, kNumBins);
+
+    // Scale by 1/(4*N^2) to normalize the FFT output, then sqrt for amplitude.
+    const float fft_scale = 1.0F / (4.0F * static_cast<float>(kFFTSize) * static_cast<float>(kFFTSize));
+    vDSP_vsmul(magnitudes, 1, &fft_scale, magnitudes, 1, kNumBins);
+
+    // Map FFT bins to 48 bars with logarithmic frequency spacing.
+    const float sample_rate = static_cast<float>(audio_stream_format_.sample_rate_hz);
+    const float bin_hz = sample_rate / static_cast<float>(kFFTSize);
+
+    for (std::size_t bar = 0; bar < 48; ++bar) {
+        const float f_low = kMinFreqHz * std::pow(kFreqRatio, static_cast<float>(bar) / 48.0F);
+        const float f_high = kMinFreqHz * std::pow(kFreqRatio, static_cast<float>(bar + 1) / 48.0F);
+
+        int bin_low = std::max(1, static_cast<int>(f_low / bin_hz));
+        int bin_high = std::min(static_cast<int>(kNumBins) - 1, static_cast<int>(f_high / bin_hz));
+        if (bin_high < bin_low) {
+            bin_high = bin_low;
+        }
+
+        // Sum magnitudes across bins in this frequency range.
+        float sum = 0.0F;
+        for (int b = bin_low; b <= bin_high; ++b) {
+            sum += magnitudes[b];
+        }
+        const float avg = sum / static_cast<float>(std::max(1, bin_high - bin_low + 1));
+
+        // Convert to dB scale for perceptually linear display.
+        // Map roughly -50dB..0dB → 0..1 with a sqrt curve for punch.
+        const float db = 10.0F * std::log10(std::max(avg, 1e-12F));
+        const float normalized = ClampUnit((db + 50.0F) / 50.0F);
+        cached_energy_bars_[bar] = std::sqrt(normalized);
+    }
 }
 
 bool MacPresetEngine::has_latest_frame() const {
@@ -968,13 +1066,25 @@ void MacPresetEngine::ensure_projectm_backend(double delta_seconds) {
 
     if (!active_preset_path_.empty()) {
         const auto normalized_active_preset = NormalizePath(active_preset_path_);
-        if (projectm_renderer_->loaded_preset_path != normalized_active_preset &&
-            !projectm_renderer_->load_preset(normalized_active_preset)) {
-            latest_frame_rgba_.clear();
-            latest_frame_width_ = 0;
-            latest_frame_height_ = 0;
-            backend_detail_ = projectm_renderer_->last_error;
-            return;
+        if (projectm_renderer_->loaded_preset_path != normalized_active_preset) {
+            if (pending_smooth_transition_) {
+                ScopedCurrentContext current(projectm_renderer_->context);
+                projectm_set_soft_cut_duration(projectm_renderer_->instance, pending_blend_seconds_);
+            }
+            if (!projectm_renderer_->load_preset(normalized_active_preset, pending_smooth_transition_)) {
+                latest_frame_rgba_.clear();
+                latest_frame_width_ = 0;
+                latest_frame_height_ = 0;
+                backend_detail_ = projectm_renderer_->last_error;
+                pending_smooth_transition_ = false;
+                return;
+            }
+            if (pending_smooth_transition_) {
+                pending_smooth_transition_ = false;
+                // Reset soft cut after loading so manual changes remain instant
+                ScopedCurrentContext current(projectm_renderer_->context);
+                projectm_set_soft_cut_duration(projectm_renderer_->instance, 0.0);
+            }
         }
     }
 
@@ -1033,21 +1143,9 @@ core::PresetEngineState MacPresetEngine::describe_state() const {
             state.waveform_preview[index] = sample_history_at_offset(offset);
         }
 
-        for (std::size_t index = 0; index < state.energy_bars.size(); ++index) {
-            const std::size_t start = (index * mono_history_count_) / state.energy_bars.size();
-            const std::size_t end = std::max(
-                start + 1,
-                ((index + 1) * mono_history_count_) / state.energy_bars.size());
-
-            float amplitude_sum = 0.0F;
-            for (std::size_t sample = start; sample < end; ++sample) {
-                amplitude_sum += std::fabs(sample_history_at_offset(sample));
-            }
-
-            const float average_amplitude =
-                amplitude_sum / static_cast<float>(std::max<std::size_t>(1, end - start));
-            state.energy_bars[index] = ClampUnit(std::pow(average_amplitude * 3.2F, 0.85F));
-        }
+        // FFT-based spectrum: 48 bars with logarithmic frequency mapping.
+        // Computed in update() via compute_fft_spectrum().
+        state.energy_bars = cached_energy_bars_;
     }
 
     std::ostringstream detail;

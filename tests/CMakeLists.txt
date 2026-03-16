@@ -18,11 +18,13 @@ if(APPLE)
 endif()
 
 if(APPLE AND TARGET libprojectM::projectM)
+    find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
+
     add_executable(
         beatdrop_macos_projectm_smoke
         tests/macos_projectm_smoke.cpp
         ${CMAKE_SOURCE_DIR}/macos/src/MacPresetEngine.cpp)
-    target_link_libraries(beatdrop_macos_projectm_smoke PRIVATE beatdrop_core libprojectM::projectM)
+    target_link_libraries(beatdrop_macos_projectm_smoke PRIVATE beatdrop_core libprojectM::projectM ${ACCELERATE_FRAMEWORK})
     target_include_directories(beatdrop_macos_projectm_smoke PRIVATE ${CMAKE_SOURCE_DIR}/macos/src)
     target_compile_features(beatdrop_macos_projectm_smoke PRIVATE cxx_std_17)
     target_compile_definitions(
@@ -37,7 +39,7 @@ if(APPLE AND TARGET libprojectM::projectM)
         beatdrop_macos_projectm_preset_motion
         tests/macos_projectm_preset_motion.cpp
         ${CMAKE_SOURCE_DIR}/macos/src/MacPresetEngine.cpp)
-    target_link_libraries(beatdrop_macos_projectm_preset_motion PRIVATE beatdrop_core libprojectM::projectM)
+    target_link_libraries(beatdrop_macos_projectm_preset_motion PRIVATE beatdrop_core libprojectM::projectM ${ACCELERATE_FRAMEWORK})
     target_include_directories(beatdrop_macos_projectm_preset_motion PRIVATE ${CMAKE_SOURCE_DIR}/macos/src)
     target_compile_features(beatdrop_macos_projectm_preset_motion PRIVATE cxx_std_17)
     target_compile_definitions(
@@ -52,7 +54,7 @@ if(APPLE AND TARGET libprojectM::projectM)
         beatdrop_macos_projectm_fft_shader_motion
         tests/macos_projectm_fft_shader_motion.cpp
         ${CMAKE_SOURCE_DIR}/macos/src/MacPresetEngine.cpp)
-    target_link_libraries(beatdrop_macos_projectm_fft_shader_motion PRIVATE beatdrop_core libprojectM::projectM)
+    target_link_libraries(beatdrop_macos_projectm_fft_shader_motion PRIVATE beatdrop_core libprojectM::projectM ${ACCELERATE_FRAMEWORK})
     target_include_directories(beatdrop_macos_projectm_fft_shader_motion PRIVATE ${CMAKE_SOURCE_DIR}/macos/src)
     target_compile_features(beatdrop_macos_projectm_fft_shader_motion PRIVATE cxx_std_17)
     target_compile_definitions(
