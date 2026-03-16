@@ -30,19 +30,29 @@ void AudioRingBuffer::push_interleaved_stereo(const float* frames, std::size_t f
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
-    const std::size_t writable_frames = std::min(frame_count, capacity_frames_ - size_frames_);
-    if (writable_frames == 0) {
-        return;
+
+    // If incoming data exceeds capacity, only keep the newest portion.
+    if (frame_count > capacity_frames_) {
+        frames += (frame_count - capacity_frames_) * 2;
+        frame_count = capacity_frames_;
     }
 
-    const std::size_t first_span = std::min(writable_frames, capacity_frames_ - write_frame_);
+    // Write the data, wrapping around the ring.
+    const std::size_t first_span = std::min(frame_count, capacity_frames_ - write_frame_);
     copy_in(write_frame_, frames, first_span);
-    if (writable_frames > first_span) {
-        copy_in(0, frames + first_span * 2, writable_frames - first_span);
+    if (frame_count > first_span) {
+        copy_in(0, frames + first_span * 2, frame_count - first_span);
     }
 
-    write_frame_ = (write_frame_ + writable_frames) % capacity_frames_;
-    size_frames_ += writable_frames;
+    write_frame_ = (write_frame_ + frame_count) % capacity_frames_;
+    size_frames_ += frame_count;
+
+    // If we overflowed, advance the read pointer past the overwritten data.
+    if (size_frames_ > capacity_frames_) {
+        const std::size_t overflow = size_frames_ - capacity_frames_;
+        read_frame_ = (read_frame_ + overflow) % capacity_frames_;
+        size_frames_ = capacity_frames_;
+    }
 }
 
 std::size_t AudioRingBuffer::pop_interleaved_stereo(std::size_t max_frames, std::vector<float>& destination) {

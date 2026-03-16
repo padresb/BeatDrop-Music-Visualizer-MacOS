@@ -878,7 +878,8 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
     MiniPlayerPanel* _miniPlayerPanel;
     MiniPlayerView* _miniPlayerView;
     std::set<std::string> _playlists[kPlaylistCount];
-    std::size_t _activePlaylist; // 0 = all presets, 1-5 = playlist Q/W/E/R/T
+    std::size_t _activePlaylist; // 0 = all presets, 1-5 = playlist G/H/J/K/L
+    BOOL _debugInfoVisible;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -946,6 +947,7 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
         _activePlaylist = _configStore
             ? static_cast<std::size_t>(std::clamp<std::int64_t>(_configStore->get_int("settings.nActivePlaylist", 0), 0, static_cast<std::int64_t>(kPlaylistCount)))
             : 0;
+        _debugInfoVisible = _configStore ? _configStore->get_bool("settings.bDebugInfoVisible", YES) : YES;
         [self loadPlaylistsFromConfig];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(handleMiniPlayerOpacityKey:)
@@ -1611,24 +1613,27 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
 - (void)drawPlaylistPanelInRect:(NSRect)bounds {
     FillRoundedRect(bounds, 24.0, [NSColor colorWithCalibratedWhite:1.0 alpha:0.06]);
 
-    const CGFloat leftInset = NSMinX(bounds) + 18.0;
-    const CGFloat textWidth = std::max(0.0, NSWidth(bounds) - 36.0);
+    const CGFloat leftInset = NSMinX(bounds) + 14.0;
+    const CGFloat rightInset = NSMaxX(bounds) - 14.0;
+    const CGFloat textWidth = std::max(0.0, rightInset - leftInset);
     CGFloat y = NSMinY(bounds) + 14.0;
 
-    DrawFittedLine(@"PLAYLISTS",
-                   NSMakeRect(leftInset, y, std::max(0.0, textWidth - 124.0), 18.0),
-                   [NSFont fontWithName:@"Avenir Next Demi Bold" size:15.0],
-                   [NSColor colorWithWhite:0.98 alpha:1.0]);
+    // Header row: title left, mode badge right
+    const CGFloat badgeWidth = 90.0;
+    DrawLabel(@"PLAYLISTS",
+              NSMakePoint(leftInset, y),
+              [NSFont fontWithName:@"Avenir Next Demi Bold" size:13.0],
+              [NSColor colorWithWhite:0.98 alpha:1.0]);
 
     NSString* modeLabel = _activePlaylist == 0
         ? @"ALL"
-        : [NSString stringWithFormat:@"PLAYLIST %s", kPlaylistNames[_activePlaylist - 1]];
+        : [NSString stringWithFormat:@"PL %s", kPlaylistNames[_activePlaylist - 1]];
     DrawCenteredText(modeLabel,
-                     NSMakeRect(NSMaxX(bounds) - 138.0, y, 118.0, 18.0),
+                     NSMakeRect(rightInset - badgeWidth, y, badgeWidth, 18.0),
                      [NSFont fontWithName:@"Avenir Next Demi Bold" size:11.0],
                      _activePlaylist == 0 ? BeatDropSky(1.0) : BeatDropAmber(1.0));
 
-    y += 24.0;
+    y += 22.0;
 
     // Check which playlists the current preset belongs to
     std::string currentPresetKey;
@@ -1649,37 +1654,36 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
         } else {
             dotColor = [NSColor colorWithWhite:0.5 alpha:0.4];
         }
-        FillEllipse(NSMakeRect(leftInset, y + 3.0, 10.0, 10.0), dotColor);
+        FillEllipse(NSMakeRect(leftInset, y + 2.0, 8.0, 8.0), dotColor);
 
-        NSString* label = [NSString stringWithFormat:@"[%s]  %zu preset%s",
+        NSString* label = [NSString stringWithFormat:@"%s  %zu",
             kPlaylistNames[i],
-            _playlists[i].size(),
-            _playlists[i].size() == 1 ? "" : "s"];
+            _playlists[i].size()];
 
         NSColor* textColor = isActive
             ? [NSColor colorWithWhite:0.98 alpha:1.0]
             : [NSColor colorWithWhite:0.90 alpha:0.70];
 
-        DrawFittedLine(label,
-                       NSMakeRect(leftInset + 18.0, y, textWidth - 18.0, 16.0),
-                       [NSFont fontWithName:@"Avenir Next Regular" size:12.5],
-                       textColor);
+        DrawLabel(label,
+                  NSMakePoint(leftInset + 14.0, y),
+                  [NSFont fontWithName:@"Avenir Next Regular" size:12.0],
+                  textColor);
 
         if (currentPresetInThis) {
-            DrawFittedLine(@"*",
-                           NSMakeRect(NSMaxX(bounds) - 30.0, y, 14.0, 16.0),
-                           [NSFont fontWithName:@"Avenir Next Demi Bold" size:14.0],
-                           BeatDropMint(0.9));
+            DrawLabel(@"*",
+                      NSMakePoint(rightInset - 12.0, y - 1.0),
+                      [NSFont fontWithName:@"Avenir Next Demi Bold" size:13.0],
+                      BeatDropMint(0.9));
         }
 
         y += 20.0;
     }
 
-    y += 6.0;
-    DrawTextBlock(@"G/H/J/K/L: tag preset, P: cycle playlist",
-                  NSMakeRect(leftInset, y, textWidth, 16.0),
-                  [NSFont fontWithName:@"Avenir Next Regular" size:11.0],
-                  [NSColor colorWithWhite:0.85 alpha:0.50]);
+    y += 4.0;
+    DrawLabel(@"G-L: tag  P: cycle",
+              NSMakePoint(leftInset, y),
+              [NSFont fontWithName:@"Avenir Next Regular" size:10.0],
+              [NSColor colorWithWhite:0.85 alpha:0.45]);
 }
 
 - (void)setFrameSize:(NSSize)newSize {
@@ -1745,7 +1749,7 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
         CFAbsoluteTimeGetCurrent() >= _autoAdvanceDeadline) {
         [self autoAdvancePreset];
     }
-    if (_frameCounter % 30 == 0 && _audioService) {
+    if (_debugInfoVisible && _frameCounter % 30 == 0 && _audioService) {
         _audioModes = _audioService->describe_modes();
     }
     [self setNeedsDisplay:YES];
@@ -1799,6 +1803,14 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
         return;
     case 't':
         [self togglePresetAutoAdvance];
+        return;
+    case 'd':
+        _debugInfoVisible = !_debugInfoVisible;
+        if (_configStore) {
+            _configStore->set_bool("settings.bDebugInfoVisible", _debugInfoVisible);
+            (void)_configStore->save();
+        }
+        [self showTransientMessage:_debugInfoVisible ? @"Debug info ON" : @"Debug info OFF"];
         return;
     case 'p':
         [self cycleActivePlaylist];
@@ -2257,6 +2269,7 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
 
     const CGFloat sectionGap = 22.0;
     NSRect contentRect = NSInsetRect(frame, 18.0, 18.0);
+
     const CGFloat sidebarWidth = std::clamp(NSWidth(contentRect) * 0.30, 340.0, 400.0);
     NSRect sidebarRect = TakeRightRect(contentRect, sidebarWidth, sectionGap);
     NSRect footerRect = TakeBottomRect(contentRect, 82.0, 18.0);
@@ -2296,9 +2309,13 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
     }
     [self drawStatsInRect:statsRect];
     [self drawPlaylistPanelInRect:playlistRect];
-    [self drawRendererSummaryInRect:rendererRect];
-    [self drawPhaseSummaryInRect:phaseRect];
-    [self drawAudioModeCardsInRect:audioCardsRect];
+
+    if (_debugInfoVisible) {
+        [self drawRendererSummaryInRect:rendererRect];
+        [self drawPhaseSummaryInRect:phaseRect];
+        [self drawAudioModeCardsInRect:audioCardsRect];
+        [self drawCapabilityChipsInRect:capabilityRect];
+    }
 
     DrawLabel(@"BeatDrop Mac Port",
               NSMakePoint(NSMinX(headerRect), NSMinY(headerRect) + 8.0),
@@ -2339,7 +2356,7 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
                    [NSFont fontWithName:@"Avenir Next Demi Bold" size:14.0],
                    [NSColor colorWithWhite:0.97 alpha:0.88]);
 
-    DrawTextBlock(@"Controls: Left/Right browse, Space/R randomize, S order, T auto-advance, G/H/J/K/L tag playlists, P cycle playlist, O Syphon, F fullscreen.",
+    DrawTextBlock(@"Controls: Left/Right browse, Space/R randomize, S order, T auto-advance, D debug, G/H/J/K/L tag playlists, P cycle playlist, O Syphon, F fullscreen.",
                   NSMakeRect(NSMinX(footerRect), NSMinY(footerRect) + 6.0, NSWidth(footerRect), 20.0),
                   [NSFont fontWithName:@"Avenir Next Regular" size:13.0],
                   [NSColor colorWithWhite:0.92 alpha:0.66]);
@@ -2348,8 +2365,6 @@ constexpr const char* kPlaylistNames[] = { "G", "H", "J", "K", "L" };
                   NSMakeRect(NSMinX(footerRect), NSMinY(footerRect) + 30.0, NSWidth(footerRect), 20.0),
                   [NSFont fontWithName:@"Avenir Next Regular" size:13.0],
                   [NSColor colorWithWhite:0.92 alpha:0.66]);
-
-    [self drawCapabilityChipsInRect:capabilityRect];
 
     if (_toastMessage != nil) {
         const CGFloat toastWidth = std::min(404.0, std::max(220.0, NSWidth(frame) - 96.0));

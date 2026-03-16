@@ -8,7 +8,7 @@ namespace beatdrop::core {
 
 class AudioRingBuffer {
 public:
-    explicit AudioRingBuffer(std::size_t capacity_frames = 44100 * 10);
+    explicit AudioRingBuffer(std::size_t capacity_frames = 44100 * 1);
 
     std::size_t capacity_frames() const;
     std::size_t available_frames() const;
