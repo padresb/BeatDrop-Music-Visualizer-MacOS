@@ -2,85 +2,96 @@
 
 ## Current state
 
-The existing application is Windows-only at the system boundary, but each dependency can be replaced on macOS:
+The macOS port is a functional native app with live audio-reactive preset rendering, system audio capture, Syphon output, and most core BeatDrop workflows restored.
 
-- Rendering depends on Win32, Direct3D 9, and D3DX.
-- System audio capture depends on WASAPI loopback APIs.
-- Inter-app video output depends on Spout DX9.
+### What works
 
-The MilkDrop assets remain reusable on macOS:
+- Native macOS `.app` bundle launches and runs as a standalone desktop app
+- `libprojectM 4.1.6` renders MilkDrop presets into an OpenGL framebuffer shared by AppKit preview and Syphon
+- System-output PCM capture via `ScreenCaptureKit` (macOS 13+)
+- Microphone capture via `AVAudioEngine` (permission-gated)
+- Syphon publisher wired to the live render surface, with persistent enable/disable toggle
+- Preset session with rating-aware randomization, history, sequential/random order, and auto-advance
+- Keyboard preset browsing (left/right/space/R) and drag/drop loading of `.milk` files or folders
+- `beatdrop.ini` import plus startup preset/session persistence in `~/Library/Application Support/BeatDrop Mac/`
+- Startup window restore for geometry, borderless, fullscreen, and always-on-top
+- Responsive AppKit status layout with shell cards and debug info toggle (D key)
+- PNG screenshot export to `~/Pictures/BeatDrop/screenshots/` via Ctrl+X / Cmd+X
+- Preset blacklist: pathological presets are auto-blacklisted on load failure and skipped during selection
+- Playlist support with five assignable playlists (G/H/J/K/L keys) and cycling (P key)
+- CoreAudio device inventory and permission diagnostics
 
-- Presets: `.milk`
-- Shaders: `.fx`
-- Textures: `dds`, `tga`, `png`, `jpg`, `bmp`
+### Keyboard shortcuts
 
-What already works in this repo revision:
+| Key | Action |
+|-----|--------|
+| Esc / F | Toggle fullscreen rendering |
+| Left | Previous preset |
+| Right | Next preset |
+| Space / R | Random preset |
+| S | Toggle order mode (sequential / random) |
+| T | Toggle preset auto-advance |
+| O | Toggle Syphon output |
+| M | Toggle mini player |
+| D | Toggle debug info |
+| P | Cycle active playlist |
+| G / H / J / K / L | Toggle current preset in playlists 0–4 |
+| Ctrl+X / Cmd+X | Save PNG screenshot |
 
-- native macOS app bundle bootstrap
-- shared cross-platform core contracts
-- live microphone PCM capture on macOS
-- live system-output PCM capture on macOS
-- known issue: after the new privacy-permission plumbing, system-output capture is the stable validation path while live microphone capture remains temporarily pinned due to an `AVAudioConverter` crash after permission grant
-- libprojectM offscreen renderer integrated into the AppKit shell when the dependency is configured locally, with the native telemetry fallback retained for dependency-free builds
-- the real preset render path now targets an explicit OpenGL framebuffer/texture pair shared by the AppKit preview and Syphon publisher, replacing the earlier pbuffer-only offscreen path
-- shared preset session with rating-aware randomization, preset history, keyboard browsing, and drag/drop loading on macOS
-- INI-backed `beatdrop.ini` import plus startup preset/session persistence on macOS
-- native window startup restore for geometry, borderless, fullscreen, and always-on-top semantics
-- responsive AppKit status layout that reflows shell cards and clips long runtime strings inside their panels
-- PNG screenshot export from the live macOS renderer
-- Syphon publisher wired to the live libprojectM render surface, with persistent enable/disable state and a keyboard toggle on macOS
-- CoreAudio input/output device inventory and permission diagnostics
-- local upstream dependency installs for `libprojectM 4.1.6` and `Syphon.framework`
-- manual headless renderer smoke executable for local bring-up, with the note that full libprojectM runtime validation still requires a desktop GUI session because headless CLI processes do not get a valid CoreGraphics connection
-- current renderer blocker: the app now reaches `RENDERER LIVE`, but compatibility is inconsistent across the preset corpus; some `.milk` files appear visually static or non-reactive even while the renderer and PCM telemetry remain live
+### Known issues and remaining work
 
-## Port strategy
+- **Preset compatibility:** The renderer is past the "broadly broken" stage. Remaining work is targeted validation against the Windows app for presets that still look suspicious. Edge cases to watch: `GetPixel`/`GetBlur*` behavior, feedback buffers, composite shader state transfer, unset `q` variable defaults, FFT normalization differences.
+- **Microphone capture:** Permission prompting is wired, but the live mic stream is pinned for hardening after a post-grant `AVAudioConverter` crash. System-output capture is the stable path.
+- **CoreAudio process taps:** Infrastructure detection is in place (`SupportsCoreAudioProcessTap()` for macOS 14.4+), but not yet implemented. Lower-overhead alternative to ScreenCaptureKit.
+- **Audio hot switching:** Not yet implemented. Device changes may require restart.
+- **Syphon receiver validation:** Publisher is live; receiver-side testing with OBS/Resolume/VDMX is outstanding.
+- **Preferences UI:** No native preferences screen yet. All config goes through `beatdrop.ini`.
 
-The realistic path to feature parity is a subsystem replacement, not a compiler-flag migration.
+### Validation presets
 
-1. Replace the window shell with Cocoa.
-2. Replace the renderer with a macOS-native implementation that preserves MilkDrop preset behavior, using libprojectM first and keeping the shell renderer-agnostic for a future Metal path.
-3. Replace WASAPI loopback/microphone capture with a CoreAudio capture pipeline.
-4. Replace Spout output with Syphon on macOS.
-5. Keep the preset and resource pipeline intact where possible.
+Useful stock presets from `resources/Milkdrop2/presets/Incubo_'s Presets` for regression testing:
+
+- **Visually responsive (good baseline):** Se7enSlasher - MilkDropLM Generated Preset #5 / #6 / #7 / #8
+- **Recovered after framebuffer readback fix:** Se7enSlasher - Moving RGB Splitting Effect
+- **Recovered after FFT shader support:** Se7enSlasher - PolarSpectrumEX
+- **Mixed cases (preset authoring quirks + possible renderer gaps):** Se7enSlasher - Mix to the mix / Mix to the mix 2
 
 ## Milestones
 
-1. Native bootstrap app
-   Status: done in this repo revision.
-   Result: the project now produces a runnable macOS `.app` bundle with a live status dashboard.
+1. **Native bootstrap app** — Done
+2. **Audio capture** — Done (system-output via ScreenCaptureKit, mic via AVAudioEngine)
+3. **Renderer integration** — Done (libprojectM offscreen → AppKit + Syphon)
+4. **Preset UX and persistence** — Done (session, history, browsing, drag/drop, INI import, startup restore)
+5. **Window semantics** — Done (geometry, borderless, fullscreen, always-on-top)
+6. **Screenshot export** — Done
+7. **Syphon output** — Done (publisher live; receiver validation outstanding)
+8. **Compatibility and performance hardening** — In progress
+9. **Packaging and release** — Not started
 
-2. Renderer boundary extraction
-   Status: in progress.
-   Goal: isolate `vis_milk2` code that is purely preset/state logic from Direct3D-specific code, route live PCM into a renderer-neutral preset-engine contract, and keep the macOS fallback renderer swappable with libprojectM.
-   Note: shared preset selection and session history have already been moved into the new core layer.
+## Troubleshooting
 
-3. Audio boundary extraction
-   Status: in progress.
-   Goal: separate BeatDrop's beat-analysis path from WASAPI device enumeration and capture callbacks while extending the new macOS audio service from microphone capture to system-output capture.
-   Note: the first working system-output path is `ScreenCaptureKit`; CoreAudio process taps remain a follow-up optimization, not the first implementation. Microphone permission prompting is wired, but the live microphone stream is currently pinned for follow-up hardening after a post-grant converter crash.
+### Hang on startup or preset load
 
-4. macOS renderer/audio implementation
-   Status: in progress.
-   Goal: feed real audio data into the new renderer path and validate baseline preset compatibility.
-   Note: preset/session state, system-output PCM, and the real libprojectM render path are live. The next blocker is compatibility/debuggability for presets that load and render but do not appear to react.
+The app can stall if a preset triggers pathological shader transpilation in `hlslparser`. Symptoms: UI freezes, ~100% CPU, no crash.
 
-5. Preset UX and persistence
-   Status: in progress.
-   Goal: restore high-value BeatDrop preset workflows on macOS, including browsing, drag/drop loading, startup preset behavior, and session persistence.
-   Note: `beatdrop.ini` import, startup preset restore, last-session preset restore, and order-mode persistence are now wired through the shared core config layer.
+Diagnostic steps:
+1. Run `sample <pid> 5` to confirm the stack is inside `projectm_load_preset_file` → `HLSLParser::ApplyPreprocessor`
+2. Check `~/Library/Application Support/BeatDrop Mac/beatdrop.ini` for `szPresetStartup` and `szPresetBlacklist`
+3. Add the offending preset path to `szPresetBlacklist` (pipe-delimited)
 
-6. Native macOS window semantics
-   Status: in progress.
-   Goal: restore high-value desktop behavior such as saved geometry, startup window mode, and always-on-top behavior.
-   Note: the native shell now restores and persists window frame geometry plus the `bBorderlessOnStartup`, `bFullscreenOnStartup`, and `bAlwaysOnTop` config semantics.
+Mitigations in the codebase:
+- `third_party/projectm/vendor/hlslparser/src/Engine.cpp` — replaced slow per-token locale/stringstream float parsing with `strtod_l`
+- `macos/src/main.mm` — preset blacklist support; rejected presets are auto-blacklisted and skipped
 
-7. Screenshot export
-   Status: in progress.
-   Goal: restore the BeatDrop screenshot workflow from the live macOS render path.
-   Note: `Ctrl+X` and `Cmd+X` now save PNG captures under the user's Pictures folder with BeatDrop-style timestamped names.
+### Preset looks frozen or non-reactive
 
-8. Output integrations
-   Status: in progress.
-   Goal: add Syphon sender support and restore high-value BeatDrop workflows used with OBS, Resolume, and similar tools on macOS.
-   Note: the macOS app now publishes the live libprojectM texture surface through Syphon when the backend is enabled; the remaining work is receiver-side validation and long-session tuning.
+Two root causes were found and fixed:
+1. **Framebuffer readback mismatch:** The macOS wrapper was reading back the wrong framebuffer after projectM's final composite step. Fixed in `MacPresetEngine.cpp`.
+2. **Missing shader FFT texture:** Shader-driven FFT presets (`get_fft()` / `get_fft_peak()`) had no texture upload path. Fixed by adding `sampler_fft` upload, `FFTAttack`/`FFTDecay` parsing, and `#if HAS_FFT_PEAK` guard unwrapping.
+
+If a preset still looks wrong, classify it: post-process/composite issue, FFT shader issue, or preset authoring quirk already present in the source `.milk`.
+
+## Vendored dependencies
+
+- `third_party/projectm` — BeatDrop-carried source based on upstream projectM commit `3158ee615eaafd93a8912b5f6dd84a9c47b2e00a` (libprojectM 4.1.6). Contains BeatDrop-specific patches (hlslparser perf, FFT shader texture). After changing this source, the installed copy under `third_party/install/projectm` must be rebuilt.
+- `third_party/install/syphon/Frameworks` — Syphon.framework from upstream Syphon project.
