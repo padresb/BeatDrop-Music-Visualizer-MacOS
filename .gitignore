@@ -13,3 +13,7 @@ audio/*.bak
 vis_milk2/*.bak
 .DS_Store
 Library/
+
+# Personal metadata
+BRET.MD
+CLAUDE.md
